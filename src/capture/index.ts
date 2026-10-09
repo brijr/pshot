@@ -1,0 +1,86 @@
+import { existsSync } from "node:fs";
+import { isAbsolute, join, resolve } from "node:path";
+import sharp from "sharp";
+import { parseRatio } from "../tokens";
+import type { Asset, Source, Theme } from "../types";
+import { ensureParent, log } from "../util";
+import { captureFigma } from "./figma";
+import { captureIos } from "./ios";
+import { captureMac } from "./mac";
+import { captureWeb } from "./web";
+
+export const ROOT = resolve(import.meta.dir, "../..");
+
+/** Which scheme a capture depends on — sources that don't vary by theme share one capture. */
+export function captureVariant(src: Source, theme: Theme): string {
+  if (src.type === "web" || src.type === "ios") {
+    return !src.scheme || src.scheme === "match" ? theme : src.scheme;
+  }
+  return "any";
+}
+
+export interface CaptureOpts {
+  project: string;
+  key: string;
+  theme: Theme;
+  dpr: number;
+  reuse: boolean;
+}
+
+export async function capture(src: Source, o: CaptureOpts): Promise<Asset> {
+  const variant = captureVariant(src, o.theme);
+  const raw = join(ROOT, "raw", o.project, `${o.key}-${variant}.png`);
+  ensureParent(raw);
+
+  if (src.type === "file") {
+    const p = isAbsolute(src.path) ? src.path : join(ROOT, src.path);
+    if (!existsSync(p)) throw new Error(`File not found: ${p}`);
+    await Bun.write(raw, Bun.file(p));
+  } else if (!(o.reuse && existsSync(raw))) {
+    log(`capture ${src.type} → ${o.key} (${variant})`);
+    if (src.type === "web") await captureWeb(src, o.theme, o.dpr, raw);
+    else if (src.type === "figma") await captureFigma(src, raw);
+    else if (src.type === "mac") await captureMac(src, raw);
+    else if (src.type === "ios") await captureIos(src, o.theme, raw);
+  }
+
+  const processed = await postProcess(raw, src);
+  return processed;
+}
+
+/** Apply crop / aspect, then measure. */
+async function postProcess(raw: string, src: Source): Promise<Asset> {
+  let img = sharp(raw);
+  let { width = 0, height = 0 } = await img.metadata();
+  let out = raw;
+
+  if (src.crop || src.aspect) {
+    let [x, y, w, h] = src.crop ?? [0, 0, width, height];
+    const frac = [x, y, w, h].every((v) => v <= 1);
+    if (frac) [x, y, w, h] = [x * width, y * height, w * width, h * height];
+    if (src.aspect) {
+      const a = parseRatio(src.aspect);
+      if (w / h > a) w = h * a; // too wide: trim right
+      else h = w / a; // too tall: trim bottom (keep the top of the page)
+    }
+    const region = { left: Math.round(x), top: Math.round(y), width: Math.round(w), height: Math.round(h) };
+    out = raw.replace(/\.png$/, ".proc.png");
+    await sharp(raw).extract(region).png().toFile(out);
+    ({ width, height } = region);
+    img = sharp(out);
+  }
+
+  // Sample the top strip (status bar tinting for phone frames).
+  const strip = await img
+    .clone()
+    .extract({ left: 0, top: 0, width, height: Math.max(1, Math.round(height * 0.01)) })
+    .removeAlpha()
+    .resize(1, 1)
+    .raw()
+    .toBuffer();
+  const [r = 0, g = 0, b = 0] = strip;
+  const topLuma = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  const topColor = `rgb(${r},${g},${b})`;
+
+  return { path: out, width, height, source: src, topLuma, topColor };
+}

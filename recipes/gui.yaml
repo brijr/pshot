@@ -1,0 +1,74 @@
+project: gui
+defaults:
+  ratio: "4:3"
+  themes: [dark, light]
+  web:
+    url: https://usegui.com
+    scheme: match # usegui.com has real dark + light modes
+
+shots:
+  # Homepage above the fold, unframed.
+  - id: home
+    source: { type: web, viewport: 1440x900 }
+    layout: single
+
+  # The whole page running off the bottom edge.
+  - id: home-bleed
+    source: { type: web, viewport: 1440x900, fullPage: true }
+    layout: bleed
+    options: { edge: bottom, size: 0.8, inset: 0.1 }
+
+  # Desktop + mobile, side by side.
+  - id: site-duo
+    sources:
+      - { type: web, viewport: 1440x900 }
+      - { type: web, viewport: 390x844 }
+    layout: duo
+
+  # MacBook + iPhone scene.
+  - id: devices
+    sources:
+      - { type: web, frame: macbook }
+      - { type: web, frame: iphone }
+    layout: duo
+
+  # Studio Display.
+  - id: display
+    source: { type: web, frame: display }
+    layout: single
+
+  # Three phones through the page, cascaded.
+  - id: mobile-stagger
+    sources:
+      - { type: web, frame: iphone }
+      - { type: web, frame: iphone, scrollTo: "section:nth-of-type(1)" }
+      - { type: web, frame: iphone, scrollTo: "section:nth-of-type(3)" }
+    layout: stagger
+    options: { size: 0.78, offset: 0.05 }
+
+  # "How it works" section, close up at 3×.
+  - id: how-it-works
+    source: { type: web, viewport: 1440x900, selector: "section.wide", dpr: 3 }
+    layout: detail
+
+  # Smooth scroll through the homepage.
+  - id: home-scroll
+    source: { type: web, viewport: 1440x900 }
+    layout: single
+    motion: { kind: scroll, duration: 7, to: end, hold: 0.8 }
+
+  # Mobile scroll inside an iPhone.
+  - id: mobile-scroll
+    source: { type: web, frame: iphone }
+    layout: single
+    motion: { kind: scroll, duration: 7, to: end, hold: 0.8 }
+
+  # The native Mac app window (needs Screen Recording permission).
+  - id: app
+    source: { type: mac, app: Gui }
+    layout: single
+
+  # usegui.com in Safari on the iOS Simulator.
+  - id: ios-safari
+    source: { type: ios, device: "iPhone 18 Pro", url: "https://usegui.com", frame: iphone, delay: 9000 }
+    layout: single

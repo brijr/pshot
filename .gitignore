@@ -1,0 +1,6 @@
+node_modules
+raw/
+output/
+.env
+.DS_Store
+.cache/
