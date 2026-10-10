@@ -25,6 +25,13 @@ interface BaseSource {
   window?: boolean;
   /** Add padding around the capture, as a fraction of its width, filled with `background`. */
   pad?: number;
+  /** Draw the artwork straight on the canvas: no card, radius, hairline, or shadow (logos, marks). */
+  bare?: boolean;
+  /** Width in px to rasterize vector sources (SVG files, Figma `format: svg`) at. Default 5000. */
+  rasterWidth?: number;
+  /** Per-theme overrides, merged in for that theme (e.g. a light logo on the dark canvas). */
+  dark?: Record<string, unknown>;
+  light?: Record<string, unknown>;
 }
 
 export interface WebSource extends BaseSource {
@@ -61,7 +68,11 @@ export interface WebSource extends BaseSource {
 export interface FigmaSource extends BaseSource {
   type: "figma";
   url: string;
+  /** Node to export, overriding the URL's node-id (e.g. "104:52"). */
+  node?: string;
   scale?: number;
+  /** `svg` exports vectors and rasterizes them at `rasterWidth`: sharp at any size (logos). */
+  format?: "png" | "svg";
 }
 
 export interface MacSource extends BaseSource {

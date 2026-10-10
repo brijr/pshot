@@ -4,7 +4,7 @@ import sharp from "sharp";
 import { parseRatio, resolveScheme } from "../tokens";
 import type { Asset, Source, Theme } from "../types";
 import { ensureParent, log } from "../util";
-import { captureFigma } from "./figma";
+import { captureFigma, rasterizeSvg } from "./figma";
 import { captureIos } from "./ios";
 import { captureMac } from "./mac";
 import { captureWeb } from "./web";
@@ -17,6 +17,7 @@ export function captureVariant(src: Source, theme: Theme): string {
     return resolveScheme(src.scheme, theme);
   }
   if (src.type === "file" && src.path.includes("{theme}")) return theme;
+  if ((src as { themed?: boolean }).themed) return theme;
   return "any";
 }
 
@@ -44,7 +45,8 @@ export async function capture(src: Source, o: CaptureOpts): Promise<Asset> {
   if (src.type === "file") {
     const p = resolvePath(src.path.replaceAll("{theme}", o.theme), o.baseDir);
     if (!existsSync(p)) throw new Error(`File not found: ${p}`);
-    await Bun.write(raw, Bun.file(p));
+    if (p.toLowerCase().endsWith(".svg")) await rasterizeSvg(await Bun.file(p).text(), raw, src.rasterWidth);
+    else await Bun.write(raw, Bun.file(p));
   } else if (!(o.reuse && existsSync(raw))) {
     log(`capture ${src.type} → ${o.key} (${variant})`);
     if (src.type === "web") await captureWeb(src, o.theme, o.dpr, raw);

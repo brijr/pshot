@@ -1,4 +1,12 @@
+import sharp from "sharp";
 import type { FigmaSource } from "../types";
+
+/** Render SVG markup to a PNG `width` px wide (vectors stay sharp at any size). */
+export async function rasterizeSvg(svg: string, out: string, width = 5000) {
+  const base = await sharp(Buffer.from(svg)).metadata();
+  const density = Math.min(72 * (width / (base.width || width)), 100000);
+  await sharp(Buffer.from(svg), { density }).resize({ width }).png().toFile(out);
+}
 
 export function parseFigmaUrl(url: string): { fileKey: string; nodeId: string } {
   const u = new URL(url);
@@ -20,7 +28,19 @@ export async function captureFigma(src: FigmaSource, out: string) {
         "(download_assets / get_screenshot) into raw/ and use a `file` source.",
     );
   }
-  const { fileKey, nodeId } = parseFigmaUrl(src.url);
+  const parsed = parseFigmaUrl(src.url);
+  const fileKey = parsed.fileKey;
+  const nodeId = src.node?.replace(/-/g, ":") ?? parsed.nodeId;
+  if (src.format === "svg") {
+    const api = `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(nodeId)}&format=svg&svg_outline_text=true`;
+    const res = await fetch(api, { headers: { "X-Figma-Token": token } });
+    if (!res.ok) throw new Error(`Figma API ${res.status}: ${await res.text()}`);
+    const body = (await res.json()) as { err?: string; images: Record<string, string | null> };
+    const url = body.images[nodeId];
+    if (!url) throw new Error(`Figma returned no SVG for ${nodeId}${body.err ? `: ${body.err}` : ""}`);
+    await rasterizeSvg(await (await fetch(url)).text(), out, src.rasterWidth);
+    return;
+  }
   // Figma returns a null image when a large render times out: retry, then step the scale down.
   const want = Math.min(src.scale ?? 4, 4);
   const scales = [want, want, Math.min(want, 3), Math.min(want, 2)];

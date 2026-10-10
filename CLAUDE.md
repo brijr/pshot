@@ -40,6 +40,9 @@ win over the defaults here.
 - Multi-device scenes: different screens on each device.
 - Motion: short and slow, one section, 4–6 seconds.
 - The real app in real states beats its marketing site.
+- Brands and logos: export from Figma with `format: svg`, draw with `bare: true`, and use `dark:` / `light:`
+  overrides for the right colorway per canvas. `recipes/shape-brand.yaml` presents a logo system six ways:
+  mark, wordmark, family (`grid` with `equalHeight`), app icon, icon set, and a giant mark bleeding off the corner.
 
 ## Working on pshot itself
 

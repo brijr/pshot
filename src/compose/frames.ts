@@ -60,6 +60,10 @@ const none: Frame = {
   render(asset, r, theme) {
     const t = THEMES[theme];
     const custom = asset.source.radius;
+    if (asset.source.bare) {
+      // Artwork straight on the canvas: no card, clip, hairline, or shadow.
+      return { under: "", over: "", screen: { ...r, radius: "0", padTop: 0, fill: "transparent", dropShadow: "none" } };
+    }
     if ((asset.source.type === "mac" || asset.source.window) && custom === undefined) {
       // Native windows carry their own rounded alpha corners and border.
       return {

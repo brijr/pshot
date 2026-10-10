@@ -1,0 +1,75 @@
+# Shape brand: the logo system presented six ways, from the Shape FS Figma brand board.
+# Logos export as SVG (sharp at any size); `dark:` / `light:` pick the right colorway per canvas.
+project: shape-brand
+defaults:
+  themes: [dark, light]
+
+shots:
+  # The mark alone, small and centered.
+  - id: mark
+    source:
+      type: figma
+      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
+      format: svg
+      bare: true
+      dark: { node: "104:52" }   # Logo / Icon, Soft
+      light: { node: "104:51" }  # Logo / Icon, Primary
+    layout: single
+    options: { fill: 0.2 }
+
+  # The Shape FS wordmark.
+  - id: wordmark
+    source:
+      type: figma
+      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
+      format: svg
+      bare: true
+      dark: { node: "104:21" }   # Wordmark FS, Soft
+      light: { node: "104:20" }  # Wordmark FS, Inverse
+    layout: single
+    options: { fill: 0.5 }
+
+  # The product family, stacked, in mono.
+  - id: family
+    sources:
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:18" }, light: { node: "104:17" } }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:23" }, light: { node: "104:22" } }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:28" }, light: { node: "104:27" } }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:33" }, light: { node: "104:32" } }
+    layout: grid
+    options: { cols: 1, gap: 0.06, fill: 0.62, equalHeight: true, align: left }
+
+  # The app icon, as an icon.
+  - id: app-icon
+    source:
+      type: figma
+      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
+      node: "104:60"             # Logo / Square, Primary Field
+      format: svg
+      radius: 81                 # iOS icon corner: 22.4% of its 360px size
+    layout: single
+    options: { fill: 0.3 }
+
+  # Every icon colorway.
+  - id: icon-set
+    sources:
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:56", format: svg, radius: 70 }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:57", format: svg, radius: 70 }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:58", format: svg, radius: 70 }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:59", format: svg, radius: 70 }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:60", format: svg, radius: 70 }
+      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:61", format: svg, radius: 70 }
+    layout: grid
+    options: { cols: 3, gap: 0.04, fill: 0.7 }
+
+  # The mark, huge, running off the corner.
+  - id: mark-bleed
+    source:
+      type: figma
+      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
+      format: svg
+      bare: true
+      dark: { node: "104:54" }   # Logo / Icon, Mono White
+      light: { node: "104:53" }  # Logo / Icon, Mono
+    layout: bleed
+    options: { edge: corner, size: 1.2, insetX: 0.1, insetY: 0.2 }

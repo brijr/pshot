@@ -79,7 +79,7 @@ const bleed: LayoutFn = ([a], W, H, o) => {
   }
   if (edge === "corner") {
     const w = W * (o.size ?? 0.94);
-    return { items: [{ asset, rect: { x: W * inset, y: H * inset, w, h: w / aspect } }] };
+    return { items: [{ asset, rect: { x: W * (o.insetX ?? inset), y: H * (o.insetY ?? inset), w, h: w / aspect } }] };
   }
   const w = W * (o.size ?? 0.84);
   return { items: [{ asset, rect: { x: (W - w) / 2, y: H * inset, w, h: w / aspect } }] };
@@ -137,15 +137,41 @@ const duo: LayoutFn = (assets, W, H, o) => {
   };
 };
 
-/** Uniform grid. cols defaults by count. */
+/**
+ * Uniform grid. cols defaults by count. `equalHeight` gives every item the same height (a logo family
+ * at one type size) instead of fitting each to its cell; `align: left` lines items up on the left.
+ */
 const grid: LayoutFn = (assets, W, H, o) => {
   const n = assets.length;
   const cols = o.cols ?? (n <= 3 ? n : n === 4 ? 2 : 3);
   const rows = Math.ceil(n / cols);
   const gap = W * (o.gap ?? 0.028);
-  const a = aspectOf(assets[0]!);
+  const aspects = assets.map(aspectOf);
   const boxW = W * (o.fill ?? 0.86);
   const boxH = H * (o.fillY ?? o.fill ?? 0.84);
+  if (o.equalHeight) {
+    // Height limited by the widest item fitting a column and all rows fitting the box.
+    const colW = (boxW - gap * (cols - 1)) / cols;
+    const h = Math.min(colW / Math.max(...aspects), (boxH - gap * (rows - 1)) / rows);
+    const colWidths = Array.from({ length: cols }, (_, c) =>
+      Math.max(...aspects.filter((_, i) => i % cols === c).map((a) => a * h)),
+    );
+    const totalW = colWidths.reduce((a, b) => a + b, 0) + gap * (cols - 1);
+    const totalH = rows * h + gap * (rows - 1);
+    const x0 = (W - totalW) / 2;
+    const y0 = (H - totalH) / 2;
+    return {
+      items: assets.map((asset, i) => {
+        const c = i % cols;
+        const r = Math.floor(i / cols);
+        const w = aspects[i]! * h;
+        const colX = x0 + colWidths.slice(0, c).reduce((a, b) => a + b, 0) + gap * c;
+        const x = o.align === "left" ? colX : colX + (colWidths[c]! - w) / 2;
+        return { asset, rect: { x, y: y0 + r * (h + gap), w, h } };
+      }),
+    };
+  }
+  const a = aspects[0]!;
   const cellW = Math.min((boxW - gap * (cols - 1)) / cols, ((boxH - gap * (rows - 1)) / rows) * a);
   const cellH = cellW / a;
   const totalW = cols * cellW + gap * (cols - 1);
@@ -159,7 +185,7 @@ const grid: LayoutFn = (assets, W, H, o) => {
       // Center a short last row.
       const inRow = r === rows - 1 ? n - r * cols : cols;
       const rowOffset = ((cols - inRow) * (cellW + gap)) / 2;
-      const { w, h } = fit(aspectOf(asset), cellW, cellH);
+      const { w, h } = fit(aspects[i]!, cellW, cellH);
       return {
         asset,
         rect: {

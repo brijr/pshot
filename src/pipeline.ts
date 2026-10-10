@@ -46,9 +46,9 @@ function resolveSources(recipe: Recipe, shot: Shot): Source[] {
 }
 
 export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<ShotReport[]> {
-  const sources = resolveSources(recipe, shot);
+  const baseSources = resolveSources(recipe, shot);
   const themes = o.themes ?? shot.themes ?? recipe.defaults?.themes ?? ["dark", "light"];
-  const layoutKind = shot.layout ?? recipe.defaults?.layout ?? (sources.length > 1 ? "row" : "single");
+  const layoutKind = shot.layout ?? recipe.defaults?.layout ?? (baseSources.length > 1 ? "row" : "single");
   const ratio = parseRatio(shot.ratio ?? recipe.defaults?.ratio ?? "4:3");
   const W = BASE_WIDTH;
   const H = Math.round(W / ratio);
@@ -60,6 +60,8 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
   for (const theme of themes) {
     console.log(`\n▸ ${shot.id} · ${theme}`);
     const assets: Asset[] = [];
+    // Per-theme overrides (e.g. `dark: { node: … }`) are merged in for this theme only.
+    const sources = baseSources.map((b) => (b[theme] ? ({ ...b, ...b[theme], themed: true } as unknown as Source) : b));
     const dprs: number[] = sources.map(() => scale);
     for (const [i, src] of sources.entries()) {
       assets.push(

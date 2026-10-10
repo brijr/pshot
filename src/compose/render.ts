@@ -105,7 +105,7 @@ function qaFor(input: RenderInput, renders: FrameRender[]): QaNote[] {
         msg: `upscaled ${pxScale.toFixed(2)}× (source ${a.width}×${a.height}px, needs ≥${Math.ceil(a.width * pxScale)}px wide). Capture at higher DPR/scale.`,
       });
     }
-    if (a.transparent && a.source.type !== "mac" && !a.source.window) {
+    if (a.transparent && a.source.type !== "mac" && !a.source.window && !a.source.bare) {
       notes.push({ item: i, level: "info", msg: "source has transparency; set `background` (and maybe `pad`) to flatten it." });
     }
     const assetAspect = a.width / a.height;

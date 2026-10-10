@@ -55,8 +55,12 @@ Outputs: `~/Projects/pshot/output/<project>/<shot>-<theme>.png|.mp4`, plus `_con
 
 ### `figma`
 
-`url` with a `?node-id=`. Exported at `scale` (default and maximum 4) through Figma's API using
-`FIGMA_TOKEN` from `~/Projects/pshot/.env`. Frames with no fill need `background` (and usually `pad`).
+`url` with a `?node-id=` (or `node: "104:52"` to pick a different node in the same file). Exported at
+`scale` (default and maximum 4) through Figma's API using `FIGMA_TOKEN` from `~/Projects/pshot/.env`.
+Frames with no fill need `background` (and usually `pad`).
+
+`format: svg` exports vectors instead and rasterizes them at `rasterWidth` (default 5000px), so logos and
+icons stay perfectly sharp at any size.
 
 ### `mac`
 
@@ -71,7 +75,8 @@ pshot sets the Simulator's appearance per theme and overrides the status bar (9:
 
 ### `file`
 
-`path` to an image, relative to the recipe. `{theme}` in the path picks a per-theme file. `window: true`
+`path` to an image (or an SVG, rasterized at `rasterWidth`), relative to the recipe. `{theme}` in the path
+picks a per-theme file. `window: true`
 treats it as a native window capture (alpha corners, drop shadow). `density` (default 2) says what pixel
 density it was captured at.
 
@@ -80,16 +85,31 @@ density it was captured at.
 `frame` (`iphone`, `ipad`, `macbook`, `display`), `crop: [x, y, w, h]` (pixels or 0–1 fractions),
 `aspect: "16:10"` (crops from the top), `radius`, `background`, `pad` (fraction of width).
 
+`bare: true` draws the artwork straight on the canvas, with no card, radius, or shadow. Use it for logos.
+
+`dark: { … }` and `light: { … }` override any option for that theme only, e.g. a light logo on the dark
+canvas and a dark one on the light canvas:
+
+```yaml
+source:
+  type: figma
+  url: "https://figma.com/design/FILE/Brand?node-id=1-2"
+  format: svg
+  bare: true
+  dark: { node: "104:52" }    # light-on-dark logo
+  light: { node: "104:51" }   # dark-on-light logo
+```
+
 ## Layouts
 
 | layout | | options |
 |---|---|---|
 | `single` | One screen, centered. | `fill`, `offsetY` |
 | `detail` | Like single, tighter. Pair with `crop` or `selector`. | `fill` |
-| `bleed` | The screen runs off the canvas. `edge: corner` with `zoom` makes close-ups where the UI reads big and runs off the right and bottom edges. | `edge` (`bottom`, `right`, `corner`), `size`, `zoom`, `inset`, `insetX`, `insetY` |
+| `bleed` | The screen runs off the canvas. `edge: corner` with `zoom` makes close-ups where the UI reads big and runs off the right and bottom edges; with `size` and `bare` it makes a giant mark running off the corner. | `edge` (`bottom`, `right`, `corner`), `size`, `zoom`, `inset`, `insetX`, `insetY` |
 | `duo` | Two screens. Unframed: an equal-height row. With frames: the second device sits in front of the first. | `scale`, `overlap`, `dropB` |
 | `row` | Equal-height row. | `gap`, `fill` |
-| `grid` | Uniform grid. | `cols`, `gap` |
+| `grid` | Uniform grid. `equalHeight` gives every item the same height (a logo family at one type size). | `cols`, `gap`, `equalHeight`, `align: left` |
 | `stagger` | Cascade with alternating offsets. | `size`, `offset`, `gap`, `rotate` |
 
 ## Frames
