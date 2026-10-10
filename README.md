@@ -10,7 +10,7 @@ an agent (it ships a Claude Code skill), but works fine by hand.
 ## Install
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/brijr/pshot/main/install.sh | bash
+curl -fsSL https://pshot.dev/install | bash
 ```
 
 Installs Bun and ffmpeg if needed, clones pshot to `~/Projects/pshot`, installs Chromium, downloads

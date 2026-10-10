@@ -2,7 +2,9 @@
 # pshot installer: clone (or update) pshot, install its toolchain, link the `pshot` command,
 # and install the Claude Code skill. Safe to re-run; it updates in place.
 #
-# Install (public repo):
+# Install:
+#   curl -fsSL https://pshot.dev/install | bash
+# Or straight from GitHub:
 #   curl -fsSL https://raw.githubusercontent.com/brijr/pshot/main/install.sh | bash
 # Or via your gh login:
 #   gh api repos/brijr/pshot/contents/install.sh -H "Accept: application/vnd.github.raw" | bash

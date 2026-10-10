@@ -79,4 +79,9 @@ rmSync(DIST, { recursive: true, force: true });
 mkdirSync(DIST, { recursive: true });
 await Bun.write(join(DIST, "index.html"), html);
 cpSync(join(SITE, "assets"), DIST, { recursive: true });
+// `curl -fsSL https://pshot.dev/install | bash`: the installer, copied from the repo on every build.
+const installer = await Bun.file(join(ROOT, "install.sh")).text();
+await Bun.write(join(DIST, "install"), installer);
+await Bun.write(join(DIST, "install.sh"), installer);
+await Bun.write(join(DIST, "_headers"), "/install\n  Content-Type: text/plain; charset=utf-8\n  Cache-Control: no-cache\n/install.sh\n  Content-Type: text/plain; charset=utf-8\n  Cache-Control: no-cache\n");
 console.log(`✓ built ${DIST}`);
