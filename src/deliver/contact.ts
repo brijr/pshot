@@ -42,7 +42,9 @@ export async function contactSheet(project: string): Promise<string | undefined>
   const htmlFile = join(thumbs, "_contact.html");
   await Bun.write(htmlFile, html);
   const browser = await getBrowser();
-  const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 }, deviceScaleFactor: 2 });
+  // Page exactly as wide as the grid (32px padding + 400px tiles + 20px gaps), so there's no dead margin.
+  const width = 64 + cols * 400 + (cols - 1) * 20;
+  const ctx = await browser.newContext({ viewport: { width, height: 900 }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
   const out = join(dir, "_contact.png");
   try {

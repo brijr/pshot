@@ -1,0 +1,9 @@
+{
+  // pshot.dev: static site (README + example contact sheet). Build: bun site/build.ts
+  "name": "pshot",
+  "account_id": "4976e8a5df6887f41b287a83e6b5c18f", // WIP
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist" }
+  // After registering pshot.dev in the WIP account, uncomment and redeploy to serve it there:
+  // ,"routes": [{ "pattern": "pshot.dev", "custom_domain": true }]
+}
