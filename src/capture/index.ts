@@ -26,6 +26,14 @@ export interface CaptureOpts {
   theme: Theme;
   dpr: number;
   reuse: boolean;
+  /** Recipe folder; relative file paths resolve here first, then from pshot's root. */
+  baseDir?: string;
+}
+
+export function resolvePath(rel: string, baseDir?: string): string {
+  if (isAbsolute(rel)) return rel;
+  const local = baseDir ? join(baseDir, rel) : undefined;
+  return local && existsSync(local) ? local : join(ROOT, rel);
 }
 
 export async function capture(src: Source, o: CaptureOpts): Promise<Asset> {
@@ -34,8 +42,7 @@ export async function capture(src: Source, o: CaptureOpts): Promise<Asset> {
   ensureParent(raw);
 
   if (src.type === "file") {
-    const rel = src.path.replaceAll("{theme}", o.theme);
-    const p = isAbsolute(rel) ? rel : join(ROOT, rel);
+    const p = resolvePath(src.path.replaceAll("{theme}", o.theme), o.baseDir);
     if (!existsSync(p)) throw new Error(`File not found: ${p}`);
     await Bun.write(raw, Bun.file(p));
   } else if (!(o.reuse && existsSync(raw))) {

@@ -141,6 +141,8 @@ export interface Shot {
 
 export interface Recipe {
   project: string;
+  /** Folder the recipe was loaded from (set by the CLI); relative paths resolve from here. */
+  dir?: string;
   defaults?: Partial<Pick<Shot, "themes" | "ratio" | "layout">> & {
     web?: Partial<WebSource>;
   };

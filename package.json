@@ -1,5 +1,5 @@
 {
-  "name": "shot-studio",
+  "name": "pshot",
   "private": true,
   "type": "module",
   "scripts": {
@@ -14,5 +14,8 @@
   "devDependencies": {
     "@types/bun": "^1.4.2",
     "typescript": "^7.0.2"
+  },
+  "bin": {
+    "pshot": "src/cli.ts"
   }
 }

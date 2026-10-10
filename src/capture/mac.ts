@@ -103,7 +103,7 @@ export async function findWindow(src: Pick<MacSource, "app" | "title">): Promise
   if (!wins.length) {
     throw new Error(
       `No on-screen window for app "${src.app}"${src.title ? ` titled "${src.title}"` : ""}. ` +
-        `Run \`bun shot windows\` to list windows. (If titles are empty, grant Screen Recording to your terminal.)`,
+        `Run \`pshot windows\` to list windows. (If titles are empty, grant Screen Recording to your terminal.)`,
     );
   }
   return wins.sort((a, b) => b.width * b.height - a.width * a.height)[0]!;

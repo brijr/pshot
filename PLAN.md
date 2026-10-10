@@ -1,4 +1,4 @@
-# Shot Studio — Plan
+# pshot — Plan
 
 An agent-driven studio for making high-end product shots of Bridger's work.
 The interface is conversation: *"take product shots of <url | Figma link | Shape folder | brand>"* →
@@ -72,13 +72,13 @@ shots:
 ## Repo layout
 
 ```
-shot-studio/
+pshot/
   CLAUDE.md          # agent operating manual: workflow, standards, QA checklist
   recipes/           # per-project shot recipes
   src/capture/       # web.ts, figma.ts, mac.ts, ios.ts
   src/compose/       # layout templates + renderer
   src/motion/        # recording + ffmpeg compositing
-  src/cli.ts         # `bun shot <recipe> [--shot id] [--xl] [--theme dark]`
+  src/cli.ts         # `pshot <recipe> [--shot id] [--xl] [--theme dark]`
   raw/               # captures (gitignored)
   output/<project>/  # finals: <shot>-<theme>.png / .mp4
 ```

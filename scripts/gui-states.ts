@@ -34,7 +34,7 @@ const { values } = parseArgs({
   },
 });
 
-const WORK = join(realpathSync(tmpdir()), "shot-studio-gui");
+const WORK = join(realpathSync(tmpdir()), "pshot-gui");
 const PROJECT = join(WORK, "www");
 const PROFILE = join(WORK, "profile");
 const OUT = join(ROOT, "raw", "gui");

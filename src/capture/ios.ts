@@ -17,11 +17,11 @@ async function resolveDevice(device?: string): Promise<string> {
   const sims = await listSims();
   if (!device) {
     const booted = sims.find((s) => s.state === "Booted");
-    if (!booted) throw new Error("No booted simulator. Boot one or set `device` in the recipe (`bun shot sims`).");
+    if (!booted) throw new Error("No booted simulator. Boot one or set `device` in the recipe (`pshot sims`).");
     return booted.udid;
   }
   const sim = sims.find((s) => s.udid === device || s.name === device);
-  if (!sim) throw new Error(`Simulator "${device}" not found (\`bun shot sims\`).`);
+  if (!sim) throw new Error(`Simulator "${device}" not found (\`pshot sims\`).`);
   if (sim.state !== "Booted") {
     await run(["xcrun", "simctl", "boot", sim.udid]);
     await run(["xcrun", "simctl", "bootstatus", sim.udid]);

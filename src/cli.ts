@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { existsSync, readdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
+import { basename, dirname, join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import YAML from "yaml";
 import { closeBrowser } from "./browser";
@@ -11,21 +11,54 @@ import { contactSheet } from "./deliver/contact";
 import { runShot, type ShotReport } from "./pipeline";
 import type { Recipe, Theme } from "./types";
 
-const HELP = `shot-studio
+const HELP = `pshot: product shots of your work
 
-  bun shot <recipe|project> [options]   Capture + render a recipe (recipes/<project>.yaml)
-  bun shot contact <project>            Rebuild output/<project>/_contact.png
-  bun shot windows                      List on-screen macOS windows (for mac sources)
-  bun shot sims                         List iOS simulators
+  pshot [recipe] [options]       Capture + render a recipe. Defaults to ./shots.yaml;
+                                 a bare name runs pshot's own recipes/<name>.yaml.
+  pshot init [url]               Write a starter ./shots.yaml for this project
+  pshot contact <project>        Rebuild the contact sheet
+  pshot windows                  List on-screen macOS windows (for mac sources)
+  pshot sims                     List iOS simulators
 
 Options
   --shot a,b       Only these shot ids
   --theme dark     Only one theme
+  --out <dir>      Also copy this run's finals into <dir> (e.g. public/work)
   --xl             Render 4800×3600 (captures at 3×)
   --reuse          Reuse existing raw captures/recordings
   --no-motion      Skip videos
   --motion-only    Only videos
   --no-contact     Skip contact sheet
+
+Finals and contact sheets live in ${join(ROOT, "output")}/<project>/.
+`;
+
+const TEMPLATE = (project: string, url: string) => `# pshot recipe (see ${join(ROOT, "CLAUDE.md")} for every option)
+project: ${project}
+defaults:
+  web:
+    url: ${url}
+    viewport: 1280x800
+
+shots:
+  # Above the fold, unframed.
+  - id: home
+    source: { type: web }
+    layout: single
+
+  # Close-up running off the right and bottom edges.
+  - id: home-corner
+    source: { type: web }
+    layout: bleed
+    options: { edge: corner, zoom: 1.4, insetX: 0.1, insetY: 0.12 }
+
+  # MacBook + iPhone.
+  - id: devices
+    sources:
+      - { type: web, frame: macbook }
+      - { type: web, frame: iphone }
+    layout: duo
+    options: { scale: 0.72, overlap: 0.06, dropB: 0.04 }
 `;
 
 async function main() {
@@ -39,11 +72,24 @@ async function main() {
       "no-motion": { type: "boolean", default: false },
       "motion-only": { type: "boolean", default: false },
       "no-contact": { type: "boolean", default: false },
+      out: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
-  const [cmd, arg] = positionals;
-  if (!cmd || values.help) return console.log(HELP);
+  let [cmd, arg] = positionals;
+  if (values.help) return console.log(HELP);
+  if (!cmd) {
+    if (!existsSync("shots.yaml")) return console.log(HELP);
+    cmd = "shots.yaml";
+  }
+
+  if (cmd === "init") {
+    if (existsSync("shots.yaml")) throw new Error("shots.yaml already exists here");
+    const project = basename(process.cwd()).toLowerCase().replace(/[^a-z0-9-]+/g, "-");
+    await Bun.write("shots.yaml", TEMPLATE(project, arg ?? "http://localhost:3000"));
+    console.log(`✓ wrote shots.yaml (project: ${project}). Edit it, then run \`pshot\`.`);
+    return;
+  }
 
   if (cmd === "windows") {
     for (const w of await listWindows()) console.log(`${w.id}\t${w.app}\t${w.title}\t${w.width}×${w.height}`);
@@ -58,9 +104,11 @@ async function main() {
     return;
   }
 
-  const path = existsSync(cmd) ? cmd : join(ROOT, "recipes", `${cmd}.yaml`);
-  if (!existsSync(path)) throw new Error(`Recipe not found: ${path}`);
+  const path = existsSync(cmd) ? resolve(cmd) : join(ROOT, "recipes", `${cmd}.yaml`);
+  if (!existsSync(path)) throw new Error(`Recipe not found: ${cmd} (no file here, and no ${path})`);
   const recipe = YAML.parse(await Bun.file(path).text()) as Recipe;
+  // Relative paths inside a recipe resolve from the recipe's own folder.
+  recipe.dir = dirname(path);
   const only = values.shot?.split(",");
   const shots = recipe.shots.filter((s) => !only || only.includes(s.id));
   if (!shots.length) throw new Error(`No matching shots in ${path}`);
@@ -100,6 +148,13 @@ async function main() {
   if (!values["no-contact"] && reports.length) {
     const sheet = await contactSheet(recipe.project);
     if (sheet) console.log(`\ncontact sheet → ${sheet}`);
+  }
+  if (values.out && reports.length) {
+    const dest = resolve(values.out);
+    mkdirSync(dest, { recursive: true });
+    const files = reports.flatMap((r) => r.outputs);
+    for (const f of files) copyFileSync(f, join(dest, basename(f)));
+    console.log(`\n→ copied ${files.length} final(s) to ${dest}`);
   }
   const warns = reports.flatMap((r) => r.qa.filter((q) => q.level === "warn").map((q) => `${r.shot}/${r.theme}: ${q.msg}`));
   if (warns.length) console.log(`\n⚠ ${warns.length} QA warning(s):\n  ${warns.join("\n  ")}`);

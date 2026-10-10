@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
-import { capture, captureVariant, ROOT } from "./capture";
+import { capture, captureVariant, resolvePath, ROOT } from "./capture";
 import { recordIos } from "./capture/ios";
 import { recordMac } from "./capture/mac";
 import { frameViewport } from "./compose/frames";
@@ -63,7 +63,7 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
     const dprs: number[] = sources.map(() => scale);
     for (const [i, src] of sources.entries()) {
       assets.push(
-        await capture(src, { project: recipe.project, key: `${shot.id}-${i}`, theme, dpr: scale, reuse: o.reuse }),
+        await capture(src, { project: recipe.project, key: `${shot.id}-${i}`, theme, dpr: scale, reuse: o.reuse, baseDir: recipe.dir }),
       );
     }
     const layout = LAYOUTS[layoutKind](assets, W, H, shot.options ?? {});
@@ -86,7 +86,7 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
           log(`↻ item ${n.item}: re-capturing at ${dpr}× to avoid upscaling`);
           dprs[n.item] = dpr;
           const src = { ...sources[n.item]!, dpr } as Source;
-          const fresh = await capture(src, { project: recipe.project, key: `${shot.id}-${n.item}`, theme, dpr, reuse: false });
+          const fresh = await capture(src, { project: recipe.project, key: `${shot.id}-${n.item}`, theme, dpr, reuse: false, baseDir: recipe.dir });
           assets[n.item] = { ...fresh, source: sources[n.item]! };
         }
         Object.assign(layout, LAYOUTS[layoutKind](assets, W, H, shot.options ?? {}));
@@ -106,7 +106,7 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
       const video = join(ROOT, "raw", recipe.project, `${shot.id}-${idx}-${captureVariant(src, theme)}.motion.mp4`);
       ensureParent(video);
       if (m.path) {
-        const p = isAbsolute(m.path) ? m.path : join(ROOT, m.path);
+        const p = resolvePath(m.path, recipe.dir);
         await Bun.write(video, Bun.file(p));
       } else if (!(o.reuse && existsSync(video))) {
         if (src.type === "web") await recordScroll(src, theme, (src as any).dpr ?? Math.max(2, dprs[idx]!), m, video);

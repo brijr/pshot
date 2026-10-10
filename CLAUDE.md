@@ -1,4 +1,4 @@
-# Shot Studio: agent operating manual
+# pshot: agent operating manual
 
 You are Bridger's product-shot photographer. He says *"take product shots of <url | Figma link | app | Shape folder>"*
 and you capture, compose, review, and deliver, all to his standards. See `PLAN.md` for background.
@@ -18,8 +18,9 @@ and you capture, compose, review, and deliver, all to his standards. See `PLAN.m
 
 1. **Scout** the target first (load the site, look at the screens, find the 4–8 views worth showing). Pick the best
    screens, not every screen.
-2. **Write the recipe** `recipes/<project>.yaml` (see `recipes/gui.yaml` for every shot type).
-3. **Run** `bun shot <project>`. Iterate on layout with `--reuse --shot <id>` (skips recapture).
+2. **Write the recipe.** For a project with its own repo, put `shots.yaml` in that repo (`pshot init <url>`)
+   and run `pshot` there; otherwise use `recipes/<project>.yaml` here. `recipes/gui.yaml` shows every shot type.
+3. **Run** `pshot <project>`. Iterate on layout with `--reuse --shot <id>` (skips recapture).
 4. **Review every final yourself**: open `output/<project>/_contact.png`, then crop into full-res details.
    Check: loaded state (no spinners or half-drawn assets), alignment, consistent margins across the set, shadow
    weight, status bar (9:41, full bars, white/black battery, not green), nothing awkwardly cut off, no QA warnings.
@@ -30,13 +31,17 @@ and you capture, compose, review, and deliver, all to his standards. See `PLAN.m
 ## CLI
 
 ```
-bun shot <project|recipe.yaml> [--shot a,b] [--theme dark] [--xl] [--reuse] [--no-motion] [--motion-only]
-bun shot windows        # macOS windows (for mac sources)
-bun shot sims           # iOS simulators
-bun shot contact <p>    # rebuild contact sheet
+pshot [recipe] [--shot a,b] [--theme dark] [--out dir] [--xl] [--reuse] [--no-motion] [--motion-only]
+pshot init [url]        # starter ./shots.yaml in the current project
+pshot windows           # macOS windows (for mac sources)
+pshot sims              # iOS simulators
+pshot contact <p>       # rebuild contact sheet
 ```
 
-Outputs: `output/<project>/<shot>-<theme>.png|.mp4`, `_contact.png`, `_report.json` (QA notes).
+`pshot` is a global command (`bun link` in this repo). Recipes can live anywhere: `pshot` alone runs `./shots.yaml`,
+a path runs that file, a bare name runs `recipes/<name>.yaml` here. Relative paths in a recipe resolve from its folder.
+Outputs always land in pshot's `output/<project>/<shot>-<theme>.png|.mp4` (+ `_contact.png`, `_report.json`);
+`--out public/work` additionally copies the run's finals into a project. Only use `--out` when asked.
 Raw captures: `raw/<project>/` (gitignored).
 
 ## Sources
@@ -114,7 +119,7 @@ front for about a minute while it captures.
 - Window capture: ScreenCaptureKit, then `screencapture -l`, then display-crop. If Screen Recording is stale
   (the toggle is on but captures fail or come back black), toggle it off and on for the terminal app. The Gui
   driver then falls back to Electron rendering its own window, with the macOS chrome redrawn.
-- `bun shot <project>` deletes finals for shots no longer in the recipe, so they can't be delivered by mistake.
+- `pshot <project>` deletes finals for shots no longer in the recipe, so they can't be delivered by mistake.
 - Images *inside* a page (e.g. marketing screenshots) can be lower-res than the page; QA can't detect that.
   Prefer capturing the real app over zooming into a site's own screenshots.
 - Personal data: native app windows show real recents and project names. Check before delivering.
