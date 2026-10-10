@@ -29,6 +29,8 @@ const { values } = parseArgs({
     repo: { type: "string", default: join(homedir(), "Projects/gui") },
     project: { type: "string", default: join(homedir(), "Projects/gui/www") },
     size: { type: "string", default: "1440x900" },
+    /** Device scale for the Electron-rendered capture; 4 keeps close-up crops (bleed zoom) sharp. */
+    scale: { type: "string", default: "4" },
   },
 });
 
@@ -76,7 +78,7 @@ async function launch(): Promise<ElectronApplication> {
   const repo = values.repo!;
   const executablePath = createRequire(join(repo, "package.json"))("electron") as unknown as string;
   if (!existsSync(join(repo, "out/main"))) throw new Error(`No build in ${repo}/out — run \`bun run build\` there first`);
-  return electron.launch({ executablePath, args: [repo, `--user-data-dir=${PROFILE}`], env, timeout: 60_000 });
+  return electron.launch({ executablePath, args: [repo, `--user-data-dir=${PROFILE}`, `--force-device-scale-factor=${values.scale}`], env, timeout: 60_000 });
 }
 
 const findPage = (app: ElectronApplication, test: (url: string) => boolean, label: string) =>

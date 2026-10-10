@@ -90,6 +90,8 @@ export interface FileSource extends BaseSource {
   type: "file";
   /** May contain `{theme}` to pick a per-theme file. */
   path: string;
+  /** Pixel density of the image (2 = Retina, the default); sets what bleed `zoom: 1` means. */
+  density?: number;
 }
 
 export type Source = WebSource | FigmaSource | MacSource | IosSource | FileSource;

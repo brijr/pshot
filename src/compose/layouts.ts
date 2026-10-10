@@ -40,12 +40,39 @@ const single: LayoutFn = ([a], W, H, o) => {
 
 const detail: LayoutFn = (assets, W, H, o) => single(assets, W, H, { fill: 0.88, ...o });
 
-/** Screen runs off one edge of the canvas. edge: bottom | right | corner. */
+/** Width of the UI in its own CSS px (what "100%" means for `zoom`). */
+function uiWidth(a: Asset): number {
+  const src = a.source;
+  if (src.type === "web" && src.viewport) return parseInt(src.viewport);
+  if (src.type === "figma") return a.width / Math.min(src.scale ?? 4, 4);
+  if (src.type === "ios") return a.width / 3;
+  if (src.type === "file") return a.width / (src.density ?? 2);
+  return a.width / 2; // Retina window captures
+}
+
+/**
+ * Screen runs off the canvas. edge: bottom | right | corner.
+ * `zoom` sizes the screen relative to its real UI size (1 = UI at 1 canvas px per CSS px), so the UI
+ * reads big and the rest runs off the edge; otherwise `size` is a fraction of the canvas.
+ * `inset` (or `insetX` / `insetY`) is where the visible corner sits.
+ */
 const bleed: LayoutFn = ([a], W, H, o) => {
   const asset = a!;
   const aspect = aspectOf(asset);
   const edge = o.edge ?? "bottom";
   const inset = o.inset ?? 0.12;
+  if (o.zoom) {
+    let w = uiWidth(asset) * o.zoom * (aspect / (asset.width / asset.height));
+    const x = edge === "bottom" ? (W - w) / 2 : W * (o.insetX ?? inset);
+    let y = edge === "right" ? (H - w / aspect) / 2 : H * (o.insetY ?? inset);
+    if (edge === "corner") {
+      // A corner bleed must run off both the right and bottom edges, by at least `bleedMin`.
+      const m = 1 + (o.bleedMin ?? 0.06);
+      w = Math.max(w, W * m - x, (H * m - y) * aspect);
+    }
+    if (edge === "right") y = (H - w / aspect) / 2;
+    return { items: [{ asset, rect: { x, y, w, h: w / aspect } }] };
+  }
   if (edge === "right") {
     const h = H * (o.size ?? 0.8);
     return { items: [{ asset, rect: { x: W * inset, y: (H - h) / 2, w: h * aspect, h } }] };

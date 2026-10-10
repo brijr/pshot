@@ -59,7 +59,11 @@ shadow automatically when the UI edge is close to the background.
 ## Layouts (`layout:` + `options:`)
 
 - `single`: `fill, offsetY`. `detail`: same, tighter (0.88).
-- `bleed`: `edge: bottom|right|corner, size, inset`. Pair with `fullPage: true`.
+- `bleed`: `edge: bottom|right|corner, size, inset|insetX|insetY, zoom, bleedMin`. Pair with `fullPage: true`
+  for a page running off the bottom. **Close-up corner crops** (UI big, running off right + bottom):
+  `edge: corner, zoom: 1.3–1.5`. `zoom` is relative to the UI's real size; corners always overflow both
+  edges. For centred-column sites use a narrower viewport so the content stays in frame. File sources
+  take `density` (Gui states are captured at 4×, so they stay sharp up close).
 - `duo`: unframed → equal-height row. With frames → a scene with the second device in front (`scale, overlap, dropB`).
 - `row`, `grid` (`cols, gap`), `stagger` (`size, offset, gap, rotate`).
 - Frames: `iphone` (18 Pro), `ipad` (Pro 13", portrait or landscape from the viewport), `macbook` (Pro 14"),

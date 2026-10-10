@@ -75,11 +75,14 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
       const out = join(outDir, `${shot.id}-${theme}${o.xl ? "@xl" : ""}.png`);
       let res = await render({ layout, theme, W, H, scale, frameOpts }, out);
 
-      // Auto-DPR: re-capture upscaled web sources at exactly the density the layout needs.
-      const retry = res.qa.filter((n) => n.upscale && sources[n.item]!.type === "web" && !(sources[n.item] as any).dpr);
-      if (retry.length) {
+      // Auto-DPR: re-capture upscaled web sources at the density the layout needs. Repeats, since a
+      // reused raw capture's density isn't known up front; the second pass is exact.
+      for (let pass = 0; pass < 3; pass++) {
+        const retry = res.qa.filter((n) => n.upscale && sources[n.item]!.type === "web" && !(sources[n.item] as any).dpr);
+        if (!retry.length) break;
         for (const n of retry) {
-          const dpr = Math.min(Math.ceil(scale * n.upscale! * 1.02 * 100) / 100, 5);
+          const dpr = Math.min(Math.ceil(dprs[n.item]! * n.upscale! * 1.02 * 100) / 100, 5);
+          if (dpr <= dprs[n.item]! && pass > 0) continue; // at the cap
           log(`↻ item ${n.item}: re-capturing at ${dpr}× to avoid upscaling`);
           dprs[n.item] = dpr;
           const src = { ...sources[n.item]!, dpr } as Source;

@@ -15,6 +15,18 @@ shots:
     layout: single
     options: { fill: 0.84 }
 
+  # Gui up close, running off the right and bottom edges (4:3 and square).
+  - id: app-corner
+    source: { type: file, path: "raw/gui/app-pick-{theme}.png", window: true, density: 4 }
+    layout: bleed
+    options: { edge: corner, zoom: 1.35, insetX: 0.1, insetY: 0.12 }
+
+  - id: app-corner-square
+    source: { type: file, path: "raw/gui/app-pick-{theme}.png", window: true, density: 4 }
+    layout: bleed
+    ratio: "1:1"
+    options: { edge: corner, zoom: 1.35, insetX: 0.12, insetY: 0.12 }
+
   # Homepage hero, crossed: light UI on near-black, dark UI on off-white.
   - id: home-cross
     source: { type: web, scheme: cross }
