@@ -61,7 +61,18 @@ shots:
     options: { scale: 0.72, overlap: 0.06, dropB: 0.04 }
 `;
 
+/** pshot's own .env (e.g. FIGMA_TOKEN), whatever folder it's run from. Existing env vars win. */
+async function loadEnv() {
+  const file = Bun.file(join(ROOT, ".env"));
+  if (!(await file.exists())) return;
+  for (const line of (await file.text()).split("\n")) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && m[2] && process.env[m[1]!] === undefined) process.env[m[1]!] = m[2].replace(/^["']|["']$/g, "");
+  }
+}
+
 async function main() {
+  await loadEnv();
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
