@@ -17,5 +17,11 @@
   },
   "bin": {
     "pshot": "src/cli.ts"
+  },
+  "license": "MIT",
+  "description": "Product shots of your work, made by your AI agent.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brijr/pshot"
   }
 }

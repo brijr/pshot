@@ -39,7 +39,7 @@ pshot contact <p>       # rebuild contact sheet
 ```
 
 `pshot` is a global command. Install or update anywhere (also links the Claude Code skill in `skills/pshot`):
-`gh api repos/brijr/pshot/contents/install.sh -H "Accept: application/vnd.github.raw" | bash`. Recipes can live anywhere: `pshot` alone runs `./shots.yaml`,
+`curl -fsSL https://raw.githubusercontent.com/brijr/pshot/main/install.sh | bash`. Recipes can live anywhere: `pshot` alone runs `./shots.yaml`,
 a path runs that file, a bare name runs `recipes/<name>.yaml` here. Relative paths in a recipe resolve from its folder.
 Outputs always land in pshot's `output/<project>/<shot>-<theme>.png|.mp4` (+ `_contact.png`, `_report.json`);
 `--out public/work` additionally copies the run's finals into a project. Only use `--out` when asked.
