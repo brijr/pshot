@@ -1,0 +1,17 @@
+<!doctype html>
+<!-- Type specimen. Params: family (Google Fonts name), weights, name, sample. Use transparent + bare. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family={{family}}:wght@400;600&display=block">
+<style>
+  :root { --ink: #0A0A0A; --dim: rgba(10,10,10,.5); } .dark { --ink: #FAFAFA; --dim: rgba(250,250,250,.5); }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--ink); font-family: "{{family}}", sans-serif; }
+  body { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 64px; padding: 0 48px; box-sizing: border-box; }
+  .aa { font-size: 280px; font-weight: 600; letter-spacing: -0.03em; line-height: .9; }
+  .name { font-size: 64px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 22px; }
+  .chars { font-size: 31px; line-height: 1.5; letter-spacing: -0.01em; color: var(--dim); }
+</style></head>
+<body class="{{theme}}">
+  <div class="aa">Aa</div>
+  <div><div class="name">{{name}}</div>
+  <div class="chars">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 — &amp; ? ! @ ( )</div></div>
+</body></html>

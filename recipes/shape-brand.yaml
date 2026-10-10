@@ -1,75 +1,132 @@
-# Shape brand: the logo system presented six ways, from the Shape FS Figma brand board.
+# Shape brand: the identity presented as a story, from the Shape FS Figma brand board.
 # Logos export as SVG (sharp at any size); `dark:` / `light:` pick the right colorway per canvas.
+# Shot ids are numbered so the contact sheet and delivered files read in order, like a brand deck.
 project: shape-brand
 defaults:
   themes: [dark, light]
 
+_figma: &figma "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
+
 shots:
-  # The mark alone, small and centered.
-  - id: mark
-    source:
-      type: figma
-      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
-      format: svg
-      bare: true
-      dark: { node: "104:52" }   # Logo / Icon, Soft
-      light: { node: "104:51" }  # Logo / Icon, Primary
+  # 1. The mark, optically centered. Mark and wordmark share one scale (the mark is the same size in both).
+  - id: 01-mark
+    source: { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:52" }, light: { node: "104:51" } }
     layout: single
-    options: { fill: 0.2 }
+    options: { height: 0.14, optical: true }
 
-  # The Shape FS wordmark.
-  - id: wordmark
-    source:
-      type: figma
-      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
-      format: svg
-      bare: true
-      dark: { node: "104:21" }   # Wordmark FS, Soft
-      light: { node: "104:20" }  # Wordmark FS, Inverse
+  # 2. The Shape FS wordmark.
+  - id: 02-wordmark
+    source: { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:21" }, light: { node: "104:20" } }
     layout: single
-    options: { fill: 0.5 }
+    options: { height: 0.153, optical: true }
 
-  # The product family, stacked, in mono.
-  - id: family
+  # 3. The product family at one type size, in mono.
+  - id: 03-family
     sources:
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:18" }, light: { node: "104:17" } }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:23" }, light: { node: "104:22" } }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:28" }, light: { node: "104:27" } }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", format: svg, bare: true, dark: { node: "104:33" }, light: { node: "104:32" } }
+      - { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:18" }, light: { node: "104:17" } }
+      - { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:23" }, light: { node: "104:22" } }
+      - { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:28" }, light: { node: "104:27" } }
+      - { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:33" }, light: { node: "104:32" } }
     layout: grid
     options: { cols: 1, gap: 0.06, fill: 0.62, equalHeight: true, align: left }
 
-  # The app icon, as an icon.
-  - id: app-icon
+  # 4. Color: the neutral and yellow ramps from the brand board.
+  - id: 04-palette
     source:
-      type: figma
-      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
-      node: "104:60"             # Logo / Square, Primary Field
-      format: svg
-      radius: 81                 # iOS icon corner: 22.4% of its 360px size
+      type: html
+      template: palette
+      viewport: 1200x260
+      transparent: true
+      bare: true
+      params:
+        columns: 11
+        rows:
+          - ["#FAFAFA", "#F5F5F5", "#E5E5E5", "#D4D4D4", "#A3A3A3", "#737373", "#525252", "#404040", "#262626", "#171717", "#0A0A0A"]
+          - ["#FEFCE8", "#FEF9C3", "#FEF08A", "#FDE047", "#FACC15"]
     layout: single
-    options: { fill: 0.3 }
+    options: { fill: 0.82 }
 
-  # Every icon colorway.
-  - id: icon-set
+  # 5. Type: Manrope, the brand typeface.
+  - id: 05-type
+    source:
+      type: html
+      template: type-specimen
+      viewport: 1300x500
+      transparent: true
+      bare: true
+      params: { family: Manrope, name: Manrope }
+    layout: single
+    options: { fill: 0.8 }
+
+  # 6. The app icon, as an icon.
+  - id: 06-app-icon
+    source: { type: figma, url: *figma, node: "104:60", format: svg, radius: 81 }
+    layout: single
+    options: { height: 0.3 }
+
+  # 7. Every icon colorway. Dark tiles get a stronger edge on the dark canvas.
+  - id: 07-icon-set
     sources:
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:56", format: svg, radius: 70 }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:57", format: svg, radius: 70 }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:58", format: svg, radius: 70 }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:59", format: svg, radius: 70 }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:60", format: svg, radius: 70 }
-      - { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", node: "104:61", format: svg, radius: 70 }
+      - { type: figma, url: *figma, node: "104:56", format: svg, radius: 70, dark: { outline: 0.2 } }
+      - { type: figma, url: *figma, node: "104:57", format: svg, radius: 70, dark: { outline: 0.2 } }
+      - { type: figma, url: *figma, node: "104:58", format: svg, radius: 70, dark: { outline: 0.2 } }
+      - { type: figma, url: *figma, node: "104:59", format: svg, radius: 70, dark: { outline: 0.2 } }
+      - { type: figma, url: *figma, node: "104:60", format: svg, radius: 70, dark: { outline: 0.2 } }
+      - { type: figma, url: *figma, node: "104:61", format: svg, radius: 70, dark: { outline: 0.2 } }
     layout: grid
     options: { cols: 3, gap: 0.04, fill: 0.7 }
 
-  # The mark, huge, running off the corner.
-  - id: mark-bleed
+  # 8. Sizes: the icon from 16 to 256px.
+  - id: 08-sizes
     source:
-      type: figma
-      url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85"
-      format: svg
+      type: html
+      template: size-ladder
+      viewport: 736x320
+      transparent: true
       bare: true
-      dark: { node: "104:54" }   # Logo / Icon, Mono White
-      light: { node: "104:53" }  # Logo / Icon, Mono
+      params: { sizes: [16, 32, 64, 128, 256] }
+      assets:
+        icon: { type: figma, url: *figma, node: "104:60", format: svg, rasterWidth: 1024 }
+    layout: single
+    options: { fill: 0.72 }
+
+  # 9. In use, small: the favicon in a browser tab (just the tab strip and address bar).
+  - id: 09-favicon
+    source:
+      type: html
+      template: browser-tab
+      viewport: 700x92
+      params: { title: "Shape — File system for your team", url: "shapefs.com" }
+      assets:
+        favicon: { type: figma, url: *figma, node: "104:60", format: svg, rasterWidth: 256 }
+    layout: single
+    options: { fill: 0.86 }
+
+  # 10. In use: the app icon on an iPhone home screen.
+  - id: 10-home-screen
+    source:
+      type: html
+      template: home-screen
+      frame: iphone
+      params: { label: Shape }
+      assets:
+        icon: { type: figma, url: *figma, node: "104:60", format: svg, rasterWidth: 512 }
+    layout: single
+
+  # 11. In use: the logo in the product, up close.
+  - id: 11-in-product
+    source: { type: web, url: "https://shapefs.com", viewport: 1280x800 }
+    layout: bleed
+    options: { edge: corner, zoom: 1.7, insetX: 0.1, insetY: 0.12 }
+
+  # 12. The mark on a full brand-yellow field (an explicit canvas override).
+  - id: 12-field
+    source: { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:53" }, light: { node: "104:54" } }
+    layout: single
+    options: { canvas: "#FACC15", height: 0.3, optical: true }
+
+  # 13. The mark, huge, running off the corner.
+  - id: 13-mark-bleed
+    source: { type: figma, url: *figma, format: svg, bare: true, dark: { node: "104:54" }, light: { node: "104:53" } }
     layout: bleed
     options: { edge: corner, size: 1.2, insetX: 0.1, insetY: 0.2 }

@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- Browser tab strip + address bar showing a favicon at real size. Assets: favicon. Params: title, url. -->
+<html><head><meta charset="utf-8"><style>
+  :root { --bg: #E8E8EA; --tab: #FFFFFF; --text: #1A1A1A; --dim: #8A8A8E; --field: #F2F2F4; --line: rgba(0,0,0,.08); }
+  .dark { --bg: #1B1B1D; --tab: #2C2C2F; --text: #F2F2F2; --dim: #8E8E93; --field: #232326; --line: rgba(255,255,255,.08); }
+  html, body { margin: 0; height: 100%; background: var(--bg); font: 13px/1 -apple-system, system-ui, sans-serif; color: var(--text); }
+  .top { height: 46px; display: flex; align-items: flex-end; padding: 0 12px; gap: 8px; }
+  .lights { display: flex; gap: 8px; align-self: center; margin: 0 14px 0 6px; } .lights i { width: 12px; height: 12px; border-radius: 50%; }
+  .tab { height: 36px; width: 260px; border-radius: 10px 10px 0 0; display: flex; align-items: center; gap: 9px; padding: 0 12px; }
+  .tab.active { background: var(--tab); } .tab.ghost { color: var(--dim); }
+  .tab img { width: 16px; height: 16px; border-radius: 3.5px; }
+  .ph { width: 16px; height: 16px; border-radius: 4px; background: var(--line); }
+  .bar { height: 46px; background: var(--tab); display: flex; align-items: center; padding: 0 16px; gap: 14px; border-bottom: 1px solid var(--line); }
+  .nav { color: var(--dim); font-size: 16px; letter-spacing: 6px; }
+  .field { flex: 1; height: 30px; border-radius: 8px; background: var(--field); display: flex; align-items: center; padding: 0 12px; gap: 8px; color: var(--text); }
+  .field img { width: 14px; height: 14px; border-radius: 3px; }
+  .page { height: calc(100% - 92px); background: var(--tab); }
+  /* With a short viewport (92px) only the tab strip and address bar show: the favicon is the subject. */
+</style></head>
+<body class="{{theme}}">
+  <div class="top">
+    <div class="lights"><i style="background:#FF5F57"></i><i style="background:#FEBC2E"></i><i style="background:#28C840"></i></div>
+    <div class="tab active"><img src="{{favicon}}"><span>{{title}}</span></div>
+    <div class="tab ghost"><div class="ph"></div><span>New Tab</span></div>
+  </div>
+  <div class="bar"><span class="nav">‹ ›</span><div class="field"><img src="{{favicon}}"><span>{{url}}</span></div></div>
+  <div class="page"></div>
+</body></html>

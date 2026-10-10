@@ -1,0 +1,14 @@
+<!doctype html>
+<!-- An icon at several sizes, bottom-aligned. Assets: icon. Params: sizes (array of px), radius (fraction). Use transparent + bare. -->
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; height: 100%; background: transparent; }
+  body { display: flex; align-items: flex-end; justify-content: center; gap: 44px; padding: 32px; box-sizing: border-box; }
+  img { display: block; }
+</style></head>
+<body>
+  <script>
+    const P = {{json}};
+    for (const s of P.sizes) document.body.insertAdjacentHTML("beforeend",
+      `<img src="${P.icon}" style="width:${s}px;height:${s}px;border-radius:${s * (P.radius ?? 0.2237)}px">`);
+  </script>
+</body></html>

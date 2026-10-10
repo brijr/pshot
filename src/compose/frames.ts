@@ -77,7 +77,9 @@ const none: Frame = {
     const br = `border-radius:${px(radius)};`;
     // When the UI's edge color is close to the background, strengthen the separation.
     const lowContrast = Math.abs((asset.edgeLuma ?? 0.5) - t.luma) < CONTRAST_THRESHOLD;
-    const hairline = lowContrast ? t.hairlineStrong : t.hairline;
+    const ink = theme === "dark" ? "255,255,255" : "0,0,0";
+    const hairline =
+      asset.source.outline !== undefined ? `rgba(${ink},${asset.source.outline})` : lowContrast ? t.hairlineStrong : t.hairline;
     const shadow = lowContrast ? t.shadowStrong : t.shadow;
     return {
       under: box(r, `${br}box-shadow:${shadow};background:${t.bg};`),

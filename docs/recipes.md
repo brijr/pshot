@@ -60,7 +60,8 @@ Outputs: `~/Projects/pshot/output/<project>/<shot>-<theme>.png|.mp4`, plus `_con
 Frames with no fill need `background` (and usually `pad`).
 
 `format: svg` exports vectors instead and rasterizes them at `rasterWidth` (default 5000px), so logos and
-icons stay perfectly sharp at any size.
+icons stay perfectly sharp at any size. Exports are cached for an hour (always, with `--reuse`), and pshot
+backs off when Figma rate-limits.
 
 ### `mac`
 
@@ -72,6 +73,29 @@ follow the system appearance, so they don't switch per theme.
 
 `device` (a Simulator name or UDID; defaults to the booted one), `url` or `app` (bundle id), `delay`.
 pshot sets the Simulator's appearance per theme and overrides the status bar (9:41, full signal and battery).
+
+### `html`
+
+Renders an HTML template to an image. Use it for brand material: a palette, a type specimen, an app icon on
+a home screen, a favicon in a browser tab.
+
+| option | |
+|---|---|
+| `template` | A template next to the recipe, or a built-in: `palette`, `type-specimen`, `size-ladder`, `browser-tab`, `home-screen`. |
+| `params` | Values for the template's `{{key}}` placeholders (also available to its scripts as `{{json}}`). |
+| `assets` | Images the template needs, as sources (e.g. a Figma icon); they're captured first and passed in as file URLs. |
+| `viewport` | Template size. With a `frame`, it's computed from the device screen. |
+| `transparent` | Keep the template's transparent background (pair with `bare: true`). |
+
+```yaml
+source:
+  type: html
+  template: home-screen
+  frame: iphone
+  params: { label: Shape }
+  assets:
+    icon: { type: figma, url: "https://figma.com/design/FILE/Brand?node-id=1-2", format: svg }
+```
 
 ### `file`
 
@@ -85,7 +109,10 @@ density it was captured at.
 `frame` (`iphone`, `ipad`, `macbook`, `display`), `crop: [x, y, w, h]` (pixels or 0–1 fractions),
 `aspect: "16:10"` (crops from the top), `radius`, `background`, `pad` (fraction of width).
 
-`bare: true` draws the artwork straight on the canvas, with no card, radius, or shadow. Use it for logos.
+`bare: true` draws the artwork straight on the canvas, with no card, radius, or shadow, and trims its
+transparent margins so the visible artwork is what gets centered. Use it for logos.
+
+`outline: 0.2` overrides the hairline's opacity, e.g. to separate dark tiles on the dark canvas.
 
 `dark: { … }` and `light: { … }` override any option for that theme only, e.g. a light logo on the dark
 canvas and a dark one on the light canvas:
@@ -104,13 +131,16 @@ source:
 
 | layout | | options |
 |---|---|---|
-| `single` | One screen, centered. | `fill`, `offsetY` |
+| `single` | One screen, centered. `height` sizes by canvas height (a consistent scale across a set); `optical` centers the artwork's visual mass instead of its box. | `fill`, `height`, `optical`, `offsetX`, `offsetY` |
 | `detail` | Like single, tighter. Pair with `crop` or `selector`. | `fill` |
 | `bleed` | The screen runs off the canvas. `edge: corner` with `zoom` makes close-ups where the UI reads big and runs off the right and bottom edges; with `size` and `bare` it makes a giant mark running off the corner. | `edge` (`bottom`, `right`, `corner`), `size`, `zoom`, `inset`, `insetX`, `insetY` |
 | `duo` | Two screens. Unframed: an equal-height row. With frames: the second device sits in front of the first. | `scale`, `overlap`, `dropB` |
 | `row` | Equal-height row. | `gap`, `fill` |
 | `grid` | Uniform grid. `equalHeight` gives every item the same height (a logo family at one type size). | `cols`, `gap`, `equalHeight`, `align: left` |
 | `stagger` | Cascade with alternating offsets. | `size`, `offset`, `gap`, `rotate` |
+
+Any shot can override its canvas color with `options: { canvas: "#FACC15" }` (or `{ dark: …, light: … }`),
+e.g. one brand-color field in an otherwise black-and-white set.
 
 ## Frames
 

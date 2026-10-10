@@ -31,6 +31,11 @@ function resolveSources(recipe: Recipe, shot: Shot): Source[] {
   const list = shot.sources ?? (shot.source ? [shot.source] : []);
   if (!list.length) throw new Error(`Shot "${shot.id}" has no source(s)`);
   return list.map((s) => {
+    if (s.type === "html") {
+      if (!s.frame || s.frame === "none") return s;
+      const fit = frameViewport(s.frame, s.viewport, { statusBar })!;
+      return { ...s, viewport: fit };
+    }
     if (s.type !== "web") return s;
     const merged = { ...recipe.defaults?.web, ...s };
     if (s.frame && s.frame !== "none") {
@@ -70,17 +75,20 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
     }
     const layout = LAYOUTS[layoutKind](assets, W, H, shot.options ?? {});
     const frameOpts = shot.options as RenderInput["frameOpts"];
+    // Per-shot canvas override (e.g. a brand-color field): a color, or { dark, light }.
+    const c = (shot.options as { canvas?: string | Record<string, string> } | undefined)?.canvas;
+    const canvas = typeof c === "string" ? c : c?.[theme];
     const report: ShotReport = { shot: shot.id, theme, outputs: [], qa: [] };
 
     // Motion shots are video-only unless `options.still: true`.
     if (o.stills && (!shot.motion || shot.options?.still || !o.motion)) {
       const out = join(outDir, `${shot.id}-${theme}${o.xl ? "@xl" : ""}.png`);
-      let res = await render({ layout, theme, W, H, scale, frameOpts }, out);
+      let res = await render({ layout, theme, W, H, scale, frameOpts, canvas }, out);
 
       // Auto-DPR: re-capture upscaled web sources at the density the layout needs. Repeats, since a
       // reused raw capture's density isn't known up front; the second pass is exact.
       for (let pass = 0; pass < 3; pass++) {
-        const retry = res.qa.filter((n) => n.upscale && sources[n.item]!.type === "web" && !(sources[n.item] as any).dpr);
+        const retry = res.qa.filter((n) => n.upscale && ["web", "html"].includes(sources[n.item]!.type) && !(sources[n.item] as any).dpr);
         if (!retry.length) break;
         for (const n of retry) {
           const dpr = Math.min(Math.ceil(dprs[n.item]! * n.upscale! * 1.02 * 100) / 100, 5);
@@ -92,7 +100,7 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
           assets[n.item] = { ...fresh, source: sources[n.item]! };
         }
         Object.assign(layout, LAYOUTS[layoutKind](assets, W, H, shot.options ?? {}));
-        res = await render({ layout, theme, W, H, scale, frameOpts }, out);
+        res = await render({ layout, theme, W, H, scale, frameOpts, canvas }, out);
       }
       report.outputs.push(out);
       report.qa.push(...res.qa);
@@ -117,7 +125,7 @@ export async function runShot(recipe: Recipe, shot: Shot, o: RunOpts): Promise<S
         else throw new Error(`Shot "${shot.id}": motion needs a web/ios/mac source or motion.path`);
       }
       const ms = SCALE.motion;
-      const input: RenderInput = { layout, theme, W, H, scale: ms, frameOpts };
+      const input: RenderInput = { layout, theme, W, H, scale: ms, frameOpts, canvas };
       const plate = video.replace(/\.mp4$/, ".plate.png");
       const top = video.replace(/\.mp4$/, ".top.png");
       const { screens } = await render(input, plate, { kind: "plate", video: idx });

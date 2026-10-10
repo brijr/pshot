@@ -27,6 +27,8 @@ interface BaseSource {
   pad?: number;
   /** Draw the artwork straight on the canvas: no card, radius, hairline, or shadow (logos, marks). */
   bare?: boolean;
+  /** Hairline opacity override (0–1), e.g. 0.24 to separate dark tiles on the dark canvas. */
+  outline?: number;
   /** Width in px to rasterize vector sources (SVG files, Figma `format: svg`) at. Default 5000. */
   rasterWidth?: number;
   /** Per-theme overrides, merged in for that theme (e.g. a light logo on the dark canvas). */
@@ -97,6 +99,21 @@ export interface IosSource extends BaseSource {
   delay?: number;
 }
 
+export interface HtmlSource extends BaseSource {
+  type: "html";
+  /** Template file (relative to the recipe), or a built-in name from pshot's templates/ (e.g. "home-screen"). */
+  template: string;
+  /** CSS viewport, e.g. "1200x600". With a `frame`, computed from the device screen. */
+  viewport?: string;
+  dpr?: number;
+  /** Values for {{key}} placeholders; all params are also available to scripts as {{json}}. */
+  params?: Record<string, unknown>;
+  /** Images to capture first and pass to the template as file URLs (any source: figma, file, web…). */
+  assets?: Record<string, Source>;
+  /** Keep the template's transparent background (for bare artwork like a size ladder). */
+  transparent?: boolean;
+}
+
 export interface FileSource extends BaseSource {
   type: "file";
   /** May contain `{theme}` to pick a per-theme file. */
@@ -105,7 +122,7 @@ export interface FileSource extends BaseSource {
   density?: number;
 }
 
-export type Source = WebSource | FigmaSource | MacSource | IosSource | FileSource;
+export type Source = WebSource | FigmaSource | MacSource | IosSource | FileSource | HtmlSource;
 
 export type FrameKind = "none" | "iphone" | "ipad" | "macbook" | "display";
 
@@ -173,4 +190,6 @@ export interface Asset {
   edgeLuma?: number;
   /** Source still has transparent pixels after processing. */
   transparent?: boolean;
+  /** Alpha-weighted center of the artwork (0–1), for optical centering. */
+  centroid?: { x: number; y: number };
 }

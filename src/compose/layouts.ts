@@ -30,12 +30,25 @@ const center = (W: number, H: number, w: number, h: number, dy = 0): Rect => ({
   h,
 });
 
-/** One screen, centered. `fill` = fraction of the canvas the screen may occupy. */
+/**
+ * One screen, centered. `fill` = fraction of the canvas the screen may occupy; `height` sizes it by
+ * canvas height instead (a consistent scale across a brand set). `optical: true` centers the artwork's
+ * visual mass (half-way between geometric and alpha-weighted center), so lopsided marks look centered.
+ */
 const single: LayoutFn = ([a], W, H, o) => {
   const asset = a!;
+  const aspect = aspectOf(asset);
   const fill = o.fill ?? (asset.source.frame && asset.source.frame !== "none" ? 0.84 : 0.8);
-  const { w, h } = fit(aspectOf(asset), W * (o.fillX ?? fill), H * (o.fillY ?? fill));
-  return { items: [{ asset, rect: center(W, H, w, h, (o.offsetY ?? 0) * H) }] };
+  const { w, h } = o.height
+    ? fit(aspect, W * 0.9, H * o.height)
+    : fit(aspect, W * (o.fillX ?? fill), H * (o.fillY ?? fill));
+  const rect = center(W, H, w, h, (o.offsetY ?? 0) * H);
+  rect.x += (o.offsetX ?? 0) * W;
+  if (o.optical && asset.centroid) {
+    rect.x += (0.5 - asset.centroid.x) * w * 0.5;
+    rect.y += (0.5 - asset.centroid.y) * h * 0.5;
+  }
+  return { items: [{ asset, rect }] };
 };
 
 const detail: LayoutFn = (assets, W, H, o) => single(assets, W, H, { fill: 0.88, ...o });

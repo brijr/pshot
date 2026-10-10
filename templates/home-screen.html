@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- iOS home screen with one real app icon among neutral placeholders. Assets: icon. Params: label. -->
+<html><head><meta charset="utf-8"><style>
+  :root { --bg: #EDEDEF; --tile: #D5D5D8; --bar: rgba(0,0,0,.14); --dock: rgba(255,255,255,.55); --ink: #111; }
+  .dark { --bg: #161617; --tile: #2C2C2E; --bar: rgba(255,255,255,.14); --dock: rgba(255,255,255,.08); --ink: #F5F5F5; }
+  html, body { margin: 0; height: 100%; background: var(--bg); font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; }
+  .grid { display: grid; grid-template-columns: repeat(4, 64px); justify-content: space-between; row-gap: 26px; padding: 18px 27px 0; }
+  .app { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .icon { width: 64px; height: 64px; border-radius: 14.3px; background: var(--tile); overflow: hidden; }
+  .icon img { width: 100%; height: 100%; display: block; }
+  .label { height: 13px; font-size: 11.5px; line-height: 13px; color: var(--ink); letter-spacing: -.01em; }
+  .bar { width: 38px; height: 5px; margin-top: 4px; border-radius: 3px; background: var(--bar); }
+  .dots { position: absolute; left: 0; right: 0; bottom: 122px; display: flex; justify-content: center; gap: 8px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--bar); } .dots i:first-child { background: var(--ink); opacity: .7; }
+  .dock { position: absolute; left: 12px; right: 12px; bottom: 22px; height: 88px; border-radius: 34px; background: var(--dock);
+          display: grid; grid-template-columns: repeat(4, 64px); justify-content: space-between; align-items: center; padding: 0 15px; }
+</style></head>
+<body class="{{theme}}">
+  <div class="grid" id="grid"></div>
+  <div class="dots"><i></i><i></i><i></i></div>
+  <div class="dock"><div class="icon"></div><div class="icon"></div><div class="icon"></div><div class="icon"></div></div>
+  <script>
+    const P = {{json}};
+    const grid = document.getElementById("grid");
+    for (let i = 0; i < 24; i++) {
+      const real = i === 5; // second row, second column
+      grid.insertAdjacentHTML("beforeend", real
+        ? `<div class="app"><div class="icon"><img src="${P.icon}"></div><div class="label">${P.label || ""}</div></div>`
+        : `<div class="app"><div class="icon"></div><div class="bar"></div></div>`);
+    }
+  </script>
+</body></html>

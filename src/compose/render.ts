@@ -24,6 +24,8 @@ export interface RenderInput {
   H: number;
   scale: number;
   frameOpts?: FrameOpts;
+  /** Canvas color override for this shot (e.g. a brand field). */
+  canvas?: string;
 }
 
 export interface QaNote {
@@ -78,7 +80,7 @@ export function buildHtml(input: RenderInput, mode: RenderMode = { kind: "full" 
   });
 
   const rotate = layout.rotate ? `transform:rotate(${layout.rotate}deg);transform-origin:50% 50%;` : "";
-  const bg = mode.kind === "top" ? "transparent" : t.bg;
+  const bg = mode.kind === "top" ? "transparent" : (input.canvas ?? t.bg);
   const html = `<!doctype html><html><head><meta charset="utf-8"><style>
     html,body{margin:0;padding:0;background:${bg};}
     #canvas{position:relative;width:${W}px;height:${H}px;overflow:hidden;background:${bg};}

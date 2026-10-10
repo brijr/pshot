@@ -4,7 +4,9 @@ import sharp from "sharp";
 import { parseRatio, resolveScheme } from "../tokens";
 import type { Asset, Source, Theme } from "../types";
 import { ensureParent, log } from "../util";
+import { pathToFileURL } from "node:url";
 import { captureFigma, rasterizeSvg } from "./figma";
+import { captureHtml } from "./html";
 import { captureIos } from "./ios";
 import { captureMac } from "./mac";
 import { captureWeb } from "./web";
@@ -17,6 +19,7 @@ export function captureVariant(src: Source, theme: Theme): string {
     return resolveScheme(src.scheme, theme);
   }
   if (src.type === "file" && src.path.includes("{theme}")) return theme;
+  if (src.type === "html") return theme;
   if ((src as { themed?: boolean }).themed) return theme;
   return "any";
 }
@@ -50,9 +53,18 @@ export async function capture(src: Source, o: CaptureOpts): Promise<Asset> {
   } else if (!(o.reuse && existsSync(raw))) {
     log(`capture ${src.type} → ${o.key} (${variant})`);
     if (src.type === "web") await captureWeb(src, o.theme, o.dpr, raw);
-    else if (src.type === "figma") await captureFigma(src, raw);
+    else if (src.type === "figma") await captureFigma(src, raw, o.reuse);
     else if (src.type === "mac") await captureMac(src, raw);
     else if (src.type === "ios") await captureIos(src, o.theme, raw);
+    else if (src.type === "html") {
+      // Capture the template's assets first (any source type), then render the template with them.
+      const urls: Record<string, string> = {};
+      for (const [name, asset] of Object.entries(src.assets ?? {})) {
+        const a = await capture(asset, { ...o, key: `${o.key}-${name}`, dpr: 2 });
+        urls[name] = pathToFileURL(a.path).href;
+      }
+      await captureHtml(src, o.theme, o.dpr, urls, o.baseDir, raw);
+    }
   }
 
   const processed = await postProcess(raw, src);
@@ -95,7 +107,31 @@ async function postProcess(raw: string, src: Source): Promise<Asset> {
     out = next;
     img = sharp(out);
   }
-  const transparent = !(await img.clone().stats()).isOpaque;
+  let transparent = !(await img.clone().stats()).isOpaque;
+  // Bare transparent artwork: trim empty margins so layouts center what's actually visible.
+  if (transparent && src.bare) {
+    const next = raw.replace(/\.png$/, ".trim.png");
+    const info = await sharp(out).trim({ threshold: 1 }).png().toFile(next);
+    out = next;
+    width = info.width;
+    height = info.height;
+    img = sharp(out);
+    transparent = true;
+  }
+  // Alpha-weighted center of the artwork, for optical centering of logos.
+  let centroid: Asset["centroid"];
+  if (transparent) {
+    const n = 64;
+    const a = await img.clone().ensureAlpha().resize(n, n, { fit: "fill" }).extractChannel(3).raw().toBuffer();
+    let sx = 0, sy = 0, sw = 0;
+    for (let i = 0; i < a.length; i++) {
+      const w = a[i]!;
+      sx += (i % n) * w;
+      sy += Math.floor(i / n) * w;
+      sw += w;
+    }
+    if (sw) centroid = { x: (sx / sw + 0.5) / n, y: (sy / sw + 0.5) / n };
+  }
 
   // Sample the top strip (status bar tinting for phone frames).
   const strip = await img
@@ -123,5 +159,5 @@ async function postProcess(raw: string, src: Source): Promise<Asset> {
     }
   }
 
-  return { path: out, width, height, source: src, topLuma, topColor, edgeLuma: sum / count, transparent };
+  return { path: out, width, height, source: src, topLuma, topColor, edgeLuma: sum / count, transparent, centroid };
 }

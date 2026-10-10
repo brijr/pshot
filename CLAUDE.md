@@ -40,9 +40,12 @@ win over the defaults here.
 - Multi-device scenes: different screens on each device.
 - Motion: short and slow, one section, 4–6 seconds.
 - The real app in real states beats its marketing site.
-- Brands and logos: export from Figma with `format: svg`, draw with `bare: true`, and use `dark:` / `light:`
-  overrides for the right colorway per canvas. `recipes/shape-brand.yaml` presents a logo system six ways:
-  mark, wordmark, family (`grid` with `equalHeight`), app icon, icon set, and a giant mark bleeding off the corner.
+- Brands: tell the story, not just the logo. `recipes/shape-brand.yaml` is the model, numbered like a brand deck:
+  mark → wordmark → family → palette → type → app icon → icon set → sizes → favicon → home screen → in product
+  → brand-color field → giant mark. Export logos from Figma with `format: svg`, draw them `bare`, size mark and
+  wordmark on one scale (`height`), center them `optical`ly, and use `dark:` / `light:` overrides for the
+  colorway per canvas. Context shots come from `html` templates. One brand-color `canvas` field is fine;
+  more than one breaks the black-and-white house style.
 
 ## Working on pshot itself
 
