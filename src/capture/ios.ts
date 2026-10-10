@@ -1,3 +1,4 @@
+import { resolveScheme } from "../tokens";
 import type { IosSource, Theme } from "../types";
 import { run, sleep } from "../util";
 
@@ -31,7 +32,7 @@ async function resolveDevice(device?: string): Promise<string> {
 /** Boot, clean the status bar, set appearance, open the app/URL. Returns the UDID. */
 async function prepare(src: IosSource, theme: Theme): Promise<string> {
   const udid = await resolveDevice(src.device);
-  const appearance = !src.scheme || src.scheme === "match" ? theme : src.scheme;
+  const appearance = resolveScheme(src.scheme, theme);
   await run(["xcrun", "simctl", "ui", udid, "appearance", appearance]);
   await run([
     "xcrun", "simctl", "status_bar", udid, "override",

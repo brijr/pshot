@@ -1,4 +1,4 @@
-import { MOBILE_RADIUS_RATIO, SCREEN_RADIUS, THEMES } from "../tokens";
+import { CONTRAST_THRESHOLD, MOBILE_RADIUS_RATIO, SCREEN_RADIUS, THEMES } from "../tokens";
 import type { Asset, FrameKind, Theme } from "../types";
 
 export interface Rect {
@@ -57,7 +57,7 @@ const none: Frame = {
   render(asset, r, theme) {
     const t = THEMES[theme];
     const custom = asset.source.radius;
-    if (asset.source.type === "mac" && custom === undefined) {
+    if ((asset.source.type === "mac" || asset.source.window) && custom === undefined) {
       // Native windows carry their own rounded alpha corners and border.
       return {
         under: "",
@@ -68,9 +68,13 @@ const none: Frame = {
     const radius =
       custom ?? (isMobile(asset) ? r.w * MOBILE_RADIUS_RATIO : Math.min(Math.max(r.w * 0.008, 6), SCREEN_RADIUS + 2));
     const br = `border-radius:${px(radius)};`;
+    // When the UI's edge color is close to the background, strengthen the separation.
+    const lowContrast = Math.abs((asset.edgeLuma ?? 0.5) - t.luma) < CONTRAST_THRESHOLD;
+    const hairline = lowContrast ? t.hairlineStrong : t.hairline;
+    const shadow = lowContrast ? t.shadowStrong : t.shadow;
     return {
-      under: box(r, `${br}box-shadow:${t.shadow};background:${t.bg};`),
-      over: box(r, `${br}box-shadow:inset 0 0 0 1px ${t.hairline};pointer-events:none;`),
+      under: box(r, `${br}box-shadow:${shadow};background:${t.bg};`),
+      over: box(r, `${br}box-shadow:inset 0 0 0 1px ${hairline};pointer-events:none;`),
       screen: { ...r, radius: px(radius), padTop: 0, fill: t.bg },
     };
   },
@@ -85,13 +89,15 @@ const FINISH = {
     band: "linear-gradient(90deg,#4a4a4d 0%,#1d1d1f 3%,#2c2c2e 50%,#1d1d1f 97%,#4a4a4d 100%)",
     button: "#2a2a2c",
     alu: "linear-gradient(180deg,#38383b 0%,#1e1e20 60%,#141416 100%)",
-    aluEdge: "#48484b",
+    aluEdge: "#55555a",
+    base: "linear-gradient(180deg,#2e2e31 0%,#1f1f21 45%,#111113 100%)",
   },
   silver: {
     band: "linear-gradient(90deg,#f4f4f6 0%,#b9b9be 3%,#dcdce0 50%,#b9b9be 97%,#f4f4f6 100%)",
     button: "#c4c4c8",
     alu: "linear-gradient(180deg,#eeeff1 0%,#d3d4d8 60%,#b4b5ba 100%)",
-    aluEdge: "#f6f6f8",
+    aluEdge: "#fbfbfc",
+    base: "linear-gradient(180deg,#e9eaec 0%,#d2d3d7 45%,#a9aaaf 100%)",
   },
 };
 
@@ -188,31 +194,52 @@ const macbook: Frame = {
     return (lidW * MBP.base) / (lidH + lidW * MBP.baseH);
   },
   render(_asset, r, theme, opts) {
-    const t = THEMES[theme];
     const f = FINISH[opts.finish ?? "black"];
     const lidW = r.w / MBP.base;
     const { sw, sh, lidH } = lidDims(lidW);
     const lid: Rect = { x: r.x + (r.w - lidW) / 2, y: r.y, w: lidW, h: lidH };
     const screen: Rect = { x: lid.x + sw * MBP.side, y: lid.y + sw * MBP.top, w: sw, h: sh };
     const baseH = lidW * MBP.baseH;
+    const baseY = lid.y + lidH;
     const lidR = lidW * 0.02;
+    const shell = lidW * 0.0032; // aluminium rim around the glass
+    const hingeH = baseH * 0.22;
 
     const under =
-      // Ground shadow under the whole machine.
-      box({ x: r.x + r.w * 0.04, y: r.y + r.h - baseH, w: r.w * 0.92, h: baseH }, `border-radius:50%;box-shadow:${t.shadow};`) +
-      box(lid, `border-radius:${px(lidR)} ${px(lidR)} ${px(lidW * 0.004)} ${px(lidW * 0.004)};background:${f.alu};box-shadow:${t.shadow};`) +
+      // Soft contact shadow on the "table" — the lid stands, so only the base casts.
       box(
-        { x: lid.x + lidW * 0.0025, y: lid.y + lidW * 0.0025, w: lidW - lidW * 0.005, h: lidH - lidW * 0.0025 },
-        `border-radius:${px(lidR * 0.9)} ${px(lidR * 0.9)} 0 0;background:#060606;`,
+        { x: r.x - r.w * 0.02, y: baseY + baseH * 0.2, w: r.w * 1.04, h: baseH * 2.6 },
+        `background:radial-gradient(50% 50% at 50% 30%,rgba(0,0,0,${theme === "dark" ? 0.7 : 0.22}),transparent 100%);`,
       ) +
-      // Base: deck + front lip with thumb scoop.
+      // Lid shell with a lit top edge.
       box(
-        { x: r.x, y: lid.y + lidH, w: r.w, h: baseH },
-        `background:${f.alu};border-radius:${px(baseH * 0.15)} ${px(baseH * 0.15)} ${px(r.w * 0.05)} ${px(r.w * 0.05)} / ${px(baseH * 0.15)} ${px(baseH * 0.15)} ${px(baseH)} ${px(baseH)};box-shadow:inset 0 ${px(Math.max(1, baseH * 0.08))} 0 ${f.aluEdge};`,
+        lid,
+        `border-radius:${px(lidR)} ${px(lidR)} ${px(lidW * 0.003)} ${px(lidW * 0.003)};background:${f.alu};box-shadow:inset 0 ${px(Math.max(1, shell * 0.35))} 0 ${f.aluEdge};`,
       ) +
+      // Black glass bezel.
       box(
-        { x: r.x + r.w * 0.42, y: lid.y + lidH, w: r.w * 0.16, h: baseH * 0.42 },
-        `background:rgba(0,0,0,.18);border-radius:0 0 ${px(baseH * 0.5)} ${px(baseH * 0.5)};`,
+        { x: lid.x + shell, y: lid.y + shell, w: lidW - 2 * shell, h: lidH - shell },
+        `border-radius:${px(lidR - shell)} ${px(lidR - shell)} 0 0;background:linear-gradient(180deg,#0d0d0e,#050505);`,
+      ) +
+      // Camera.
+      box(
+        { x: lid.x + lidW / 2 - sw * 0.0022, y: lid.y + (sw * MBP.top) / 2 - sw * 0.0022, w: sw * 0.0044, h: sw * 0.0044 },
+        `border-radius:50%;background:radial-gradient(circle at 40% 35%,#2a2d35,#0a0a0c 70%);box-shadow:0 0 0 ${px(sw * 0.0012)} #141416;`,
+      ) +
+      // Hinge.
+      box(
+        { x: lid.x + lidW * 0.06, y: baseY - hingeH * 0.4, w: lidW * 0.88, h: hingeH },
+        `background:linear-gradient(180deg,#050505,#1e1e20);border-radius:0 0 ${px(hingeH)} ${px(hingeH)};`,
+      ) +
+      // Base: lit top edge, body gradient, rounded front.
+      box(
+        { x: r.x, y: baseY, w: r.w, h: baseH },
+        `background:${f.base};border-radius:${px(baseH * 0.12)} ${px(baseH * 0.12)} ${px(r.w * 0.045)} ${px(r.w * 0.045)} / ${px(baseH * 0.12)} ${px(baseH * 0.12)} ${px(baseH * 0.9)} ${px(baseH * 0.9)};box-shadow:inset 0 ${px(Math.max(1, baseH * 0.07))} 0 ${f.aluEdge},inset 0 -${px(Math.max(1, baseH * 0.05))} 0 rgba(0,0,0,.25);`,
+      ) +
+      // Thumb scoop.
+      box(
+        { x: r.x + r.w * 0.43, y: baseY, w: r.w * 0.14, h: baseH * 0.36 },
+        `background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.08));border-radius:0 0 ${px(baseH * 0.6)} ${px(baseH * 0.6)} / 0 0 ${px(baseH * 0.36)} ${px(baseH * 0.36)};`,
       );
 
     let over = "";
@@ -241,7 +268,7 @@ const display: Frame = {
   },
   render(_asset, r, theme, opts) {
     const t = THEMES[theme];
-    const f = FINISH[opts.finish ?? "black"];
+    const f = FINISH[opts.finish ?? "silver"];
     const sw = r.w / (1 + 2 * SD.bezel);
     const b = sw * SD.bezel;
     const lidH = sw / SD.aspect + 2 * b;
@@ -256,13 +283,13 @@ const display: Frame = {
       box({ x: r.x + (r.w - footW * 1.1) / 2, y: r.y + r.h - footH, w: footW * 1.1, h: footH }, `border-radius:50%;box-shadow:${t.shadow};`) +
       box(
         { x: r.x + (r.w - neckW) / 2, y: lid.y + lidH - b, w: neckW, h: standH - footH + b },
-        `background:${f.alu};-webkit-mask:linear-gradient(90deg,rgba(0,0,0,.85),#000 20%,#000 80%,rgba(0,0,0,.85));`,
+        `background:linear-gradient(90deg,rgba(0,0,0,.12),transparent 25%,transparent 75%,rgba(0,0,0,.12)),${f.alu};`,
       ) +
       box(
         { x: r.x + (r.w - footW) / 2, y: r.y + r.h - footH, w: footW, h: footH },
         `background:${f.alu};border-radius:${px(footH * 0.3)} ${px(footH * 0.3)} ${px(footH * 0.5)} ${px(footH * 0.5)};box-shadow:inset 0 1px 0 ${f.aluEdge};`,
       ) +
-      box(lid, `border-radius:${px(r.w * 0.012)};background:${f.alu};box-shadow:${t.shadow};`) +
+      box(lid, `border-radius:${px(r.w * 0.012)};background:${f.alu};box-shadow:${t.shadow},inset 0 1px 0 ${f.aluEdge};`) +
       box(
         { x: lid.x + r.w * 0.003, y: lid.y + r.w * 0.003, w: lid.w - r.w * 0.006, h: lid.h - r.w * 0.006 },
         `border-radius:${px(r.w * 0.01)};background:#060606;`,

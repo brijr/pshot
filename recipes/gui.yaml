@@ -5,70 +5,65 @@ defaults:
   web:
     url: https://usegui.com
     scheme: match # usegui.com has real dark + light modes
+    viewport: 1280x800 # smaller viewport → UI renders larger in frame
 
 shots:
-  # Homepage above the fold, unframed.
-  - id: home
-    source: { type: web, viewport: 1440x900 }
+  # Gui itself: usegui.com open in Gui, "real app" picked, the change written in the chat.
+  # Captured by `bun scripts/gui-states.ts` (drives the real app on a throwaway project copy).
+  - id: app
+    source: { type: file, path: "raw/gui/app-compose-{theme}.png", window: true }
+    layout: single
+    options: { fill: 0.84 }
+
+  # Homepage hero, crossed: light UI on near-black, dark UI on off-white.
+  - id: home-cross
+    source: { type: web, scheme: cross }
     layout: single
 
   # The whole page running off the bottom edge.
   - id: home-bleed
-    source: { type: web, viewport: 1440x900, fullPage: true }
+    source: { type: web, fullPage: true }
     layout: bleed
     options: { edge: bottom, size: 0.8, inset: 0.1 }
 
-  # Desktop + mobile, side by side.
+  # "Bring your own agent" on desktop + mobile.
   - id: site-duo
     sources:
-      - { type: web, viewport: 1440x900 }
-      - { type: web, viewport: 390x844 }
+      - { type: web, scrollTo: "section:nth-of-type(3)" }
+      - { type: web, viewport: 390x844, scrollTo: "section:nth-of-type(3)" }
     layout: duo
 
-  # MacBook + iPhone scene.
+  # MacBook ("How it works") + iPhone (agents panel): different content on each device.
   - id: devices
     sources:
-      - { type: web, frame: macbook }
-      - { type: web, frame: iphone }
+      - { type: web, frame: macbook, scrollTo: "section.wide" }
+      - { type: web, frame: iphone, scrollTo: "figure.narrow" }
     layout: duo
+    options: { scale: 0.72, overlap: 0.06, dropB: 0.04 }
 
-  # Studio Display.
+  # Studio Display on the "Your real app" section.
   - id: display
-    source: { type: web, frame: display }
+    source: { type: web, frame: display, scrollTo: "section:nth-of-type(4)" }
     layout: single
 
-  # Three phones through the page, cascaded.
+  # Four phones, four different screens.
   - id: mobile-stagger
     sources:
       - { type: web, frame: iphone }
-      - { type: web, frame: iphone, scrollTo: "section:nth-of-type(1)" }
-      - { type: web, frame: iphone, scrollTo: "section:nth-of-type(3)" }
+      - { type: web, frame: iphone, scrollTo: "section.wide" }
+      - { type: web, frame: iphone, scrollTo: "figure.narrow" }
+      - { type: web, frame: iphone, scrollTo: "section:nth-of-type(4)" }
     layout: stagger
-    options: { size: 0.78, offset: 0.05 }
+    options: { size: 0.6, offset: 0.05, gap: 0.024 }
 
-  # "How it works" section, close up at 3×.
-  - id: how-it-works
-    source: { type: web, viewport: 1440x900, selector: "section.wide", dpr: 3 }
-    layout: detail
-
-  # Smooth scroll through the homepage.
+  # Short, slow scroll from the hero into "How it works".
   - id: home-scroll
-    source: { type: web, viewport: 1440x900 }
+    source: { type: web }
     layout: single
-    motion: { kind: scroll, duration: 7, to: end, hold: 0.8 }
+    motion: { kind: scroll, duration: 4.5, to: "section.wide", hold: 1 }
 
-  # Mobile scroll inside an iPhone.
+  # Mobile scroll through "How it works" down to the agents panel.
   - id: mobile-scroll
-    source: { type: web, frame: iphone }
+    source: { type: web, frame: iphone, scrollTo: "section.wide" }
     layout: single
-    motion: { kind: scroll, duration: 7, to: end, hold: 0.8 }
-
-  # The native Mac app window (needs Screen Recording permission).
-  - id: app
-    source: { type: mac, app: Gui }
-    layout: single
-
-  # usegui.com in Safari on the iOS Simulator.
-  - id: ios-safari
-    source: { type: ios, device: "iPhone 18 Pro", url: "https://usegui.com", frame: iphone, delay: 9000 }
-    layout: single
+    motion: { kind: scroll, duration: 6, from: "section.wide", to: "figure.narrow", hold: 1 }

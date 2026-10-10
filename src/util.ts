@@ -32,11 +32,15 @@ export function log(...args: unknown[]) {
 }
 
 /**
- * Env for child processes. Electron-based hosts (editors, agent shells) export
- * ELECTRON_RUN_AS_NODE=1, which makes any Electron app we launch boot as plain Node and exit.
+ * Env for apps we launch, so they behave as if the user opened them:
+ * - Electron-based hosts export ELECTRON_RUN_AS_NODE=1, which makes Electron apps boot as plain Node.
+ * - Agent markers (CLAUDECODE, AI_AGENT, …) make tools like `astro dev` switch to agent mode and
+ *   daemonize, which looks like a crash to the app that started them.
  */
+const AGENT_ENV = /^(ELECTRON_RUN_AS_NODE$|CLAUDECODE$|CLAUDE_|AI_AGENT$|CODEX_|CURSOR_AGENT|AGENT_)/;
+
 export function cleanEnv(): Record<string, string | undefined> {
   const env = { ...process.env };
-  delete env.ELECTRON_RUN_AS_NODE;
+  for (const key of Object.keys(env)) if (AGENT_ENV.test(key)) delete env[key];
   return env;
 }

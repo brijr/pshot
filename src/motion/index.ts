@@ -16,14 +16,22 @@ export async function recordScroll(src: WebSource, theme: Theme, dpr: number, m:
   const hold = m.hold ?? 0.6;
   const { page, close } = await openWebPage(src, theme, dpr, { still: false });
   try {
-    const from = m.from ?? 0;
-    const to: number = await page.evaluate((target) => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (target === undefined || target === "end") return max;
-      if (typeof target === "number") return Math.min(target, max);
-      const el = document.querySelector(target);
-      return el ? Math.min(el.getBoundingClientRect().top + window.scrollY, max) : max;
-    }, m.to);
+    const resolve = (target: number | string | undefined, fallback: "top" | "end") =>
+      page.evaluate(
+        ([target, fallback]) => {
+          const max = document.documentElement.scrollHeight - window.innerHeight;
+          if (target === undefined) return fallback === "end" ? max : 0;
+          if (target === "end") return max;
+          if (typeof target === "number") return Math.min(target, max);
+          const el = document.querySelector(target);
+          return el ? Math.min(el.getBoundingClientRect().top + window.scrollY, max) : 0;
+        },
+        [target, fallback] as const,
+      );
+    const from = await resolve(m.from, "top");
+    const to = await resolve(m.to, "end");
+    await page.evaluate((y) => window.scrollTo(0, y), from);
+    await page.waitForTimeout(400);
 
     const total = Math.round(fps * (duration + hold * 2));
     log(`record scroll ${from}→${Math.round(to)}px, ${total} frames @${fps}fps`);

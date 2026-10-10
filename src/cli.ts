@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
 import YAML from "yaml";
@@ -85,6 +85,17 @@ async function main() {
   }
 
   const outDir = join(ROOT, "output", recipe.project);
+  // Drop finals from shots that are no longer in the recipe, so they can't be delivered by mistake.
+  const ids = new Set(recipe.shots.map((s) => s.id));
+  if (existsSync(outDir)) {
+    for (const f of readdirSync(outDir)) {
+      const m = f.match(/^(.+)-(dark|light)(@xl)?\.(png|mp4)$/);
+      if (m && !ids.has(m[1]!)) {
+        rmSync(join(outDir, f));
+        console.log(`  − removed stale ${f}`);
+      }
+    }
+  }
   if (reports.length) await Bun.write(join(outDir, "_report.json"), JSON.stringify({ reports, failures }, null, 2));
   if (!values["no-contact"] && reports.length) {
     const sheet = await contactSheet(recipe.project);

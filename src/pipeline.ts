@@ -31,8 +31,9 @@ function resolveSources(recipe: Recipe, shot: Shot): Source[] {
   if (!list.length) throw new Error(`Shot "${shot.id}" has no source(s)`);
   return list.map((s) => {
     if (s.type !== "web") return s;
+    // Viewport precedence: the source's own → its frame's screen → recipe default → 1440×900.
     const merged = { ...recipe.defaults?.web, ...s };
-    merged.viewport ??= (s.frame && FRAME_VIEWPORTS[s.frame]) || "1440x900";
+    merged.viewport = s.viewport ?? (s.frame && FRAME_VIEWPORTS[s.frame]) ?? recipe.defaults?.web?.viewport ?? "1440x900";
     return merged;
   });
 }

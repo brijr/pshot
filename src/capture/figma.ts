@@ -21,13 +21,23 @@ export async function captureFigma(src: FigmaSource, out: string) {
     );
   }
   const { fileKey, nodeId } = parseFigmaUrl(src.url);
-  const scale = Math.min(src.scale ?? 4, 4);
-  const api = `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(nodeId)}&scale=${scale}&format=png&use_absolute_bounds=true`;
-  const res = await fetch(api, { headers: { "X-Figma-Token": token } });
-  if (!res.ok) throw new Error(`Figma API ${res.status}: ${await res.text()}`);
-  const body = (await res.json()) as { err?: string; images: Record<string, string | null> };
-  const imageUrl = body.images[nodeId];
-  if (!imageUrl) throw new Error(`Figma returned no image for ${nodeId}${body.err ? `: ${body.err}` : ""}`);
-  const img = await fetch(imageUrl);
-  await Bun.write(out, await img.arrayBuffer());
+  // Figma returns a null image when a large render times out: retry, then step the scale down.
+  const want = Math.min(src.scale ?? 4, 4);
+  const scales = [want, want, Math.min(want, 3), Math.min(want, 2)];
+  let lastErr = "";
+  for (const scale of scales) {
+    const api = `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(nodeId)}&scale=${scale}&format=png`;
+    const res = await fetch(api, { headers: { "X-Figma-Token": token } });
+    if (!res.ok) throw new Error(`Figma API ${res.status}: ${await res.text()}`);
+    const body = (await res.json()) as { err?: string; images: Record<string, string | null> };
+    const imageUrl = body.images[nodeId];
+    if (imageUrl) {
+      if (scale < want) console.log(`   ! Figma render timed out at ${want}×, exported at ${scale}×`);
+      const img = await fetch(imageUrl);
+      await Bun.write(out, await img.arrayBuffer());
+      return;
+    }
+    lastErr = body.err ?? "null image";
+  }
+  throw new Error(`Figma returned no image for ${nodeId}: ${lastErr}`);
 }

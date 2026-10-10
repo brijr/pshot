@@ -1,5 +1,5 @@
 export type Theme = "dark" | "light";
-export type Scheme = "dark" | "light" | "match";
+export type Scheme = "dark" | "light" | "match" | "cross";
 
 export type Action =
   | { click: string }
@@ -19,6 +19,12 @@ interface BaseSource {
   frame?: FrameKind;
   /** Corner radius override (CSS px at a 1600-wide canvas). */
   radius?: number;
+  /** Flatten transparency onto this color (e.g. Figma frames with no fill). */
+  background?: string;
+  /** The image is a native window capture with its own alpha corners (drop-shadow, no clip). */
+  window?: boolean;
+  /** Add padding around the capture, as a fraction of its width, filled with `background`. */
+  pad?: number;
 }
 
 export interface WebSource extends BaseSource {
@@ -75,6 +81,7 @@ export interface IosSource extends BaseSource {
 
 export interface FileSource extends BaseSource {
   type: "file";
+  /** May contain `{theme}` to pick a per-theme file. */
   path: string;
 }
 
@@ -100,7 +107,8 @@ export interface Motion {
   duration?: number;
   /** Scroll target: px, a selector, or "end". */
   to?: number | string;
-  from?: number;
+  /** Start position: px or a selector. */
+  from?: number | string;
   hold?: number;
   fps?: number;
   /** For kind: video — path to the recording (or recorded via `ios`/`mac` sources). */
@@ -139,4 +147,8 @@ export interface Asset {
   /** Average luminance of the top rows, 0–1 (status bar tinting). */
   topLuma?: number;
   topColor?: string;
+  /** Average luminance of the outer edge ring, 0–1 (contrast-aware borders). */
+  edgeLuma?: number;
+  /** Source still has transparent pixels after processing. */
+  transparent?: boolean;
 }

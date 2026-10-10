@@ -12,7 +12,7 @@ for w in info {
         let b = w[kCGWindowBounds as String] as? [String: CGFloat] else { continue }
   if (b["Width"] ?? 0) < 50 || (b["Height"] ?? 0) < 50 { continue }
   out.append([
-    "id": id, "app": app, "title": w[kCGWindowName as String] as? String ?? "",
+    "id": id, "pid": w[kCGWindowOwnerPID as String] as? Int ?? 0, "app": app, "title": w[kCGWindowName as String] as? String ?? "",
     "x": b["X"] ?? 0, "y": b["Y"] ?? 0, "width": b["Width"] ?? 0, "height": b["Height"] ?? 0,
   ])
 }

@@ -1,6 +1,6 @@
 import type { Page } from "playwright";
 import { getBrowser } from "../browser";
-import { parseSize } from "../tokens";
+import { parseSize, resolveScheme } from "../tokens";
 import type { Action, Theme, WebSource } from "../types";
 
 /** Common cookie / consent / chat overlays. Recipes add their own via `hide`. */
@@ -46,7 +46,7 @@ export async function openWebPage(
   opts: { still: boolean },
 ): Promise<OpenedPage> {
   const [width, height] = parseSize(src.viewport ?? "1440x900");
-  const scheme = !src.scheme || src.scheme === "match" ? theme : src.scheme;
+  const scheme = resolveScheme(src.scheme, theme);
   const browser = await getBrowser();
   const context = await browser.newContext({
     viewport: { width, height },

@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 import sharp from "sharp";
-import { parseRatio } from "../tokens";
+import { parseRatio, resolveScheme } from "../tokens";
 import type { Asset, Source, Theme } from "../types";
 import { ensureParent, log } from "../util";
 import { captureFigma } from "./figma";
@@ -14,8 +14,9 @@ export const ROOT = resolve(import.meta.dir, "../..");
 /** Which scheme a capture depends on — sources that don't vary by theme share one capture. */
 export function captureVariant(src: Source, theme: Theme): string {
   if (src.type === "web" || src.type === "ios") {
-    return !src.scheme || src.scheme === "match" ? theme : src.scheme;
+    return resolveScheme(src.scheme, theme);
   }
+  if (src.type === "file" && src.path.includes("{theme}")) return theme;
   return "any";
 }
 
@@ -33,7 +34,8 @@ export async function capture(src: Source, o: CaptureOpts): Promise<Asset> {
   ensureParent(raw);
 
   if (src.type === "file") {
-    const p = isAbsolute(src.path) ? src.path : join(ROOT, src.path);
+    const rel = src.path.replaceAll("{theme}", o.theme);
+    const p = isAbsolute(rel) ? rel : join(ROOT, rel);
     if (!existsSync(p)) throw new Error(`File not found: ${p}`);
     await Bun.write(raw, Bun.file(p));
   } else if (!(o.reuse && existsSync(raw))) {
@@ -70,6 +72,22 @@ async function postProcess(raw: string, src: Source): Promise<Asset> {
     img = sharp(out);
   }
 
+  if (src.background || src.pad) {
+    const next = raw.replace(/\.png$/, ".bg.png");
+    let pipe = sharp(out);
+    if (src.background) pipe = pipe.flatten({ background: src.background });
+    if (src.pad) {
+      const p = Math.round(width * src.pad);
+      pipe = pipe.extend({ top: p, bottom: p, left: p, right: p, background: src.background ?? { r: 0, g: 0, b: 0, alpha: 0 } });
+      width += 2 * p;
+      height += 2 * p;
+    }
+    await pipe.png().toFile(next);
+    out = next;
+    img = sharp(out);
+  }
+  const transparent = !(await img.clone().stats()).isOpaque;
+
   // Sample the top strip (status bar tinting for phone frames).
   const strip = await img
     .clone()
@@ -82,5 +100,19 @@ async function postProcess(raw: string, src: Source): Promise<Asset> {
   const topLuma = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
   const topColor = `rgb(${r},${g},${b})`;
 
-  return { path: out, width, height, source: src, topLuma, topColor };
+  // Edge ring: downsample, then average the outermost pixels.
+  const n = 24;
+  const tiny = await img.clone().removeAlpha().resize(n, n, { fit: "fill" }).raw().toBuffer();
+  let sum = 0;
+  let count = 0;
+  for (let yy = 0; yy < n; yy++) {
+    for (let xx = 0; xx < n; xx++) {
+      if (xx && yy && xx < n - 1 && yy < n - 1) continue;
+      const i = (yy * n + xx) * 3;
+      sum += (0.2126 * tiny[i]! + 0.7152 * tiny[i + 1]! + 0.0722 * tiny[i + 2]!) / 255;
+      count++;
+    }
+  }
+
+  return { path: out, width, height, source: src, topLuma, topColor, edgeLuma: sum / count, transparent };
 }

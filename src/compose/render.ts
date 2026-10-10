@@ -105,6 +105,9 @@ function qaFor(input: RenderInput, renders: FrameRender[]): QaNote[] {
         msg: `upscaled ${pxScale.toFixed(2)}× (source ${a.width}×${a.height}px, needs ≥${Math.ceil(a.width * pxScale)}px wide). Capture at higher DPR/scale.`,
       });
     }
+    if (a.transparent && a.source.type !== "mac" && !a.source.window) {
+      notes.push({ item: i, level: "info", msg: "source has transparency; set `background` (and maybe `pad`) to flatten it." });
+    }
     const assetAspect = a.width / a.height;
     const slotAspect = cw / ch;
     // Tall full-page captures in bleed layouts are expected to crop.
@@ -112,7 +115,7 @@ function qaFor(input: RenderInput, renders: FrameRender[]): QaNote[] {
     if (!s.dropShadow && cropped > 0.03 && it.rect.y + it.rect.h <= input.H) {
       notes.push({
         item: i,
-        level: "info",
+        level: cropped > 0.25 ? "warn" : "info",
         msg: `content cropped to fit (${assetAspect.toFixed(3)} → ${slotAspect.toFixed(3)}); match the viewport to the frame to avoid.`,
       });
     }

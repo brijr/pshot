@@ -1,0 +1,10 @@
+project: shape
+defaults:
+  ratio: "4:3"
+  themes: [dark, light]
+
+shots:
+  # Figma frame exported at 4× via the REST API.
+  - id: figma-frame
+    source: { type: figma, url: "https://www.figma.com/design/YtsME8chIf9jIOsnoyFpts/Shape-FS?node-id=24-85", background: "#161616", pad: 0.05 }
+    layout: single
