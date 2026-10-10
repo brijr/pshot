@@ -1,38 +1,36 @@
 ---
 name: pshot
-description: Make high-end product shots of Bridger's work (websites, local dev servers, Figma frames, Mac/iOS apps) with the `pshot` CLI. Use whenever Bridger asks for product shots, portfolio images, case-study visuals, mockups, device shots, screenshots "for the portfolio", or "shoot the <page>", from any project/repo.
+description: Make high-end product shots of websites, local dev servers, Figma frames, and Mac/iOS apps with the `pshot` CLI. Use whenever the user asks for product shots, portfolio images, case-study visuals, mockups, device shots, screenshots "for the portfolio", or to "shoot" a page, from any project.
 ---
 
 # pshot: product shots
 
-`pshot` is Bridger's product-shot tool: a global CLI (repo `~/Projects/pshot`, github.com/brijr/pshot).
-**Read `~/Projects/pshot/CLAUDE.md` before the first shot in a session.** It is the full operating manual
-(sources, layouts, frames, motion, QA, delivery, gotchas). This skill is the summary.
+`pshot` is a global CLI (installed in `~/Projects/pshot` by default; pshot.dev). Before the first shot in a
+session, read `~/Projects/pshot/CLAUDE.md` (how to work) and `~/Projects/pshot/docs/recipes.md` (every option).
+The user's own preferences, from memory or instructions, override pshot's defaults.
 
-## Standards (never drift)
+## Defaults
 
-- Near-black `#0A0A0A` / off-white `#FAFAFA` backgrounds. No gradients, color, text, logos, or captions.
-- **4:3 only**, 3200×2400 (`--xl` 4800×3600). Always **dark and light**.
-- Minimal framing by default (raw UI, radius, soft shadow). Devices (`iphone`, `ipad`, `macbook`, `display`,
-  Apple's official bezels) when they help. Close-ups: `layout: bleed` with `edge: corner, zoom: 1.3–1.5`.
-- Never upscale; real, fully loaded content; every shot in a set shows different content.
+- Near-black `#0A0A0A` / off-white `#FAFAFA` canvases. No captions, logos, or watermarks.
+- 4:3 at 3200×2400. Every shot in dark and light.
+- Minimal framing by default; device frames (`iphone`, `ipad`, `macbook`, `display`) when they help.
+  Close-ups: `layout: bleed` with `edge: corner, zoom: 1.3–1.5`.
+- Never upscale. Real, fully loaded content. Every shot in a set shows different content.
 
-## Workflow in any project
+## Workflow
 
-1. **Scout** the site/app (live URL or the project's dev server; start it if needed) and pick 4–8 views.
-2. **Recipe**: `pshot init <url>` writes `./shots.yaml` in the current repo; edit it (see `~/Projects/pshot/recipes/*.yaml`
-   for examples). Sites with their own theme toggle: `storage: { theme: "{theme}" }`.
-3. **Render**: `pshot` (runs `./shots.yaml`). Iterate with `pshot --shot <id> --reuse`.
-4. **Review** `~/Projects/pshot/output/<project>/_contact.png` and full-res crops. Fix anything off. Resolve QA warnings.
+1. **Scout** the site or app (live URL, or the project's dev server; start it if needed). Pick 4–8 views.
+2. **Recipe**: `pshot init <url>` writes `./shots.yaml`. Edit it. Sites with their own theme toggle need
+   `storage: { theme: "{theme}" }`.
+3. **Render**: `pshot`. Iterate with `pshot --shot <id> --reuse`.
+4. **Review** `~/Projects/pshot/output/<project>/_contact.png` and full-resolution crops. Fix anything off and
+   resolve every QA warning.
 5. **Show** the contact sheet and wait for feedback.
-6. **Deliver** only what's approved: Shape `/Portfolio/<project>/` (Shape MCP `prepare_upload` → `curl -T`), and/or
-   `--out <dir>` into the project (e.g. `public/work`) **only when Bridger asks**.
-
-## Commands
+6. **Deliver** only what's approved, where the user wants it. Use `--out <dir>` only when asked.
 
 ```
 pshot [recipe] [--shot a,b] [--theme dark] [--out dir] [--xl] [--reuse] [--no-motion] [--motion-only]
 pshot init [url]   pshot windows   pshot sims   pshot contact <project>
 ```
 
-Don't commit `shots.yaml` or rendered images into a project unless Bridger asks.
+Don't commit `shots.yaml` or rendered images into a project unless the user asks.

@@ -1,126 +1,66 @@
 # pshot: agent operating manual
 
-You are Bridger's product-shot photographer. He says *"take product shots of <url | Figma link | app | Shape folder>"*
-and you capture, compose, review, and deliver, all to his standards. See `PLAN.md` for background.
+You make product shots with pshot. The user says *"take product shots of <url | Figma link | app>"* and you
+scout, write a recipe, render, review, and deliver. Every option is in [`docs/recipes.md`](docs/recipes.md);
+this file is how to use them well. If the user has their own preferences (in memory or instructions), those
+win over the defaults here.
 
-## Standards (do not drift)
+## House style (pshot's defaults; don't drift from them unless the user asks)
 
-- Backgrounds: near-black `#0A0A0A` / off-white `#FAFAFA` (in `src/tokens.ts`). No gradients, color, or text.
-- Framing: **minimal by default** (raw UI, radius, soft shadow; hairline on dark). Mockups (`iphone`, `macbook`,
-  `display`) only when asked or when they clearly help.
-- No captions, logos, or watermarks. The work only.
-- **4:3 only** (for now): 3200×2400, `--xl` = 4800×3600. Don't set `ratio` in recipes. Always render **dark and light**.
-- **Never upscale.** The renderer flags it, and web sources auto-recapture at the needed DPR. A warning on any
-  other source type means you must recapture higher (Figma `scale: 4`, or use a bigger window/simulator).
-- Real content only. Hide cookie banners, chat widgets, dev toasts, and empty/loading states.
+- Near-black `#0A0A0A` / off-white `#FAFAFA` canvases (`src/tokens.ts`). No gradients, color, captions, logos,
+  or watermarks. The work only.
+- 4:3 at 3200×2400 (`--xl` 4800×3600). Every shot in dark **and** light.
+- Minimal framing by default (raw UI, radius, soft shadow; hairline on dark). Device frames when they help.
+- **Never upscale.** Web sources re-capture automatically; a warning on any other source means capture larger.
+- Real, fully loaded content. No spinners, empty states, cookie banners, chat widgets, or dev toasts.
 
 ## Workflow
 
-1. **Scout** the target first (load the site, look at the screens, find the 4–8 views worth showing). Pick the best
-   screens, not every screen.
-2. **Write the recipe.** For a project with its own repo, put `shots.yaml` in that repo (`pshot init <url>`)
-   and run `pshot` there; otherwise use `recipes/<project>.yaml` here. `recipes/gui.yaml` shows every shot type.
-3. **Run** `pshot <project>`. Iterate on layout with `--reuse --shot <id>` (skips recapture).
-4. **Review every final yourself**: open `output/<project>/_contact.png`, then crop into full-res details.
-   Check: loaded state (no spinners or half-drawn assets), alignment, consistent margins across the set, shadow
-   weight, status bar (9:41, full bars, white/black battery, not green), nothing awkwardly cut off, no QA warnings.
-   Fix and re-render before showing anything.
+1. **Scout** first: load the site or app (start the project's dev server if it's local), look at the screens,
+   and pick the 4–8 views worth showing. The best screens, not every screen.
+2. **Write the recipe.** In a project repo: `pshot init <url>` writes `./shots.yaml`; edit it. Otherwise use
+   `recipes/<project>.yaml` in this repo. `recipes/gui.yaml` uses nearly every feature.
+3. **Run** `pshot` (or `pshot <recipe>`). Iterate on one shot with `--shot <id> --reuse`.
+4. **Review every final yourself**: open `output/<project>/_contact.png`, then crop into full-resolution
+   details. Check: fully loaded, alignment and margins consistent across the set, shadow weight, status bar
+   (9:41, full bars, battery not green), nothing awkwardly cut off, no QA warnings. Fix and re-render before
+   showing anything.
 5. **Show** the contact sheet and wait for feedback.
-6. **Deliver** approved finals to Shape at `/Portfolio/<project>/` (see below).
+6. **Deliver** only what's approved, where the user wants it. `--out <dir>` copies finals into a project; only
+   use it when asked. Don't commit `shots.yaml` or images into someone's project unless asked.
 
-## CLI
-
-```
-pshot [recipe] [--shot a,b] [--theme dark] [--out dir] [--xl] [--reuse] [--no-motion] [--motion-only]
-pshot init [url]        # starter ./shots.yaml in the current project
-pshot windows           # macOS windows (for mac sources)
-pshot sims              # iOS simulators
-pshot contact <p>       # rebuild contact sheet
-```
-
-`pshot` is a global command. Install or update anywhere (also links the Claude Code skill in `skills/pshot`):
-`curl -fsSL https://pshot.dev/install | bash`. Recipes can live anywhere: `pshot` alone runs `./shots.yaml`,
-a path runs that file, a bare name runs `recipes/<name>.yaml` here. Relative paths in a recipe resolve from its folder.
-Outputs always land in pshot's `output/<project>/<shot>-<theme>.png|.mp4` (+ `_contact.png`, `_report.json`);
-`--out public/work` additionally copies the run's finals into a project. Only use `--out` when asked.
-Raw captures: `raw/<project>/` (gitignored).
-
-## Sources
-
-| type | notes |
-|---|---|
-| `web` | `url, viewport, scheme (match/dark/light/cross), fullPage, selector, scrollTo, hide[], css, actions[], waitFor, delay, dpr, storage, hideFixed`. Sites with their own theme toggle (next-themes etc.) ignore the OS scheme: set `storage: { theme: "{theme}" }` to preset localStorage per shot. `hideFixed` (default on for `fullPage`) hides floating CTAs/clocks that would otherwise land mid-page. `scheme: match` captures dark UI for dark shots when the site supports it. With a `frame`, the viewport defaults to the frame's screen (see Layouts → Frames). |
-| `figma` | `url` with `?node-id=`. REST export at `scale` (max 4) with `FIGMA_TOKEN` from `.env`, retrying and stepping down the scale if Figma's render times out. Boards with no fill need `background` + `pad`. If there's no token, export via the Figma MCP into `raw/` and use `file`. |
-| `mac` | `app, title?, size?`. Captures one window at Retina without the system shadow (keeps native corners). Needs Screen Recording permission. The app follows the system appearance, so it does **not** switch per theme. |
-| `ios` | `device, url?, app?, delay`. Sets appearance per theme and overrides the status bar. Pages need ~8–9 s to fully load in Simulator Safari. |
-| `file` | `path` (absolute or repo-relative). Use for Shape downloads or MCP exports. |
-
-Any source accepts `frame`, `crop: [x,y,w,h]` (px or 0–1), `aspect: "16:10"` (crops from the top), `radius`,
-`background` (flatten transparency, e.g. Figma frames with no fill) and `pad` (padding as a fraction of width).
-
-`scheme: cross` pairs light UI with the dark background and vice versa. It's often more striking than `match`
-when the UI's background is close to the canvas color. Unframed screens also strengthen their hairline and
-shadow automatically when the UI edge is close to the background.
-
-## Layouts (`layout:` + `options:`)
-
-- `single`: `fill, offsetY`. `detail`: same, tighter (0.88).
-- `bleed`: `edge: bottom|right|corner, size, inset|insetX|insetY, zoom, bleedMin`. Pair with `fullPage: true`
-  for a page running off the bottom. **Close-up corner crops** (UI big, running off right + bottom):
-  `edge: corner, zoom: 1.3–1.5`. `zoom` is relative to the UI's real size; corners always overflow both
-  edges. For centred-column sites use a narrower viewport so the content stays in frame. File sources
-  take `density` (Gui states are captured at 4×, so they stay sharp up close).
-- `duo`: unframed → equal-height row. With frames → a scene with the second device in front (`scale, overlap, dropB`).
-- `row`, `grid` (`cols, gap`), `stagger` (`size, offset, gap, rotate`).
-- Frames: `iphone` (18 Pro), `ipad` (Pro 13", portrait or landscape from the viewport), `macbook` (Pro 14"),
-  `display` (Studio Display). They use **Apple's official product bezels** from `assets/bezels/` (gitignored;
-  run `bun scripts/setup-bezels.ts` once on a new machine). Without them, CSS-drawn frames are the fallback.
-  **Screens are always filled exactly:** for web sources the viewport is computed from the measured bezel
-  screen (iPhone 402×812 with status bar, iPad 1032×1376 / 1376×1032, MacBook 1512×950 below the notch,
-  Display 1600×900). A wrong recipe viewport keeps its width and gets its height corrected (logged `↔`).
-  Other sources (iOS, Figma, files) that don't match the screen shape fail QA with a warning.
-- Frame options in `options`: `finish: black|silver` (iPhone/iPad/MacBook; default black. The Studio Display
-  variant follows the theme), `statusBar`.
-
-## Composition rules of thumb
+## Composition
 
 - Every shot in a set shows **different content**. Never the same hero in eight costumes.
-- Prefer 1280×800 (or smaller) desktop viewports so UI reads at thumbnail size; use `bleed`/`detail` for scale.
-- Multi-device scenes: put different screens on each device.
-- Motion: short and slow (one section, 4–6 s), not the whole page.
-- The real app in real states beats the marketing site.
+- Desktop viewports of 1280×800 or smaller, so UI reads at thumbnail size. `bleed` and `detail` for scale.
+- Close-ups: `layout: bleed` with `edge: corner, zoom: 1.3–1.5`. For centered-column sites, use a narrower
+  viewport so the content stays in frame.
+- `scheme: cross` (light UI on the dark canvas and vice versa) is often the most striking hero when the UI's
+  background is close to the canvas color.
+- Multi-device scenes: different screens on each device.
+- Motion: short and slow, one section, 4–6 seconds.
+- The real app in real states beats its marketing site.
 
-## Motion
+## Working on pshot itself
 
-`motion: { kind: scroll, duration, to: end|px|selector, hold, fps }` on a web source records a deterministic
-eased scroll frame by frame (no dropped frames), then composites it into the layout at 2400×1800 / 60fps H.264.
-`ios`/`mac` sources use `record: <seconds>` (a real-time screen recording). `path:` composites any existing video.
-Motion can't be combined with `rotate`.
-
-## Delivering to Shape
-
-Finals go to `/Portfolio/<project>/` (create with `create_folder` if missing). For each final:
-`prepare_upload { path: "/Portfolio/<project>/<file>", size_bytes }` → `curl -sT <file> "<upload_url>"`.
-Skip `_contact.png` and `_report.json` unless asked.
-
-## Shooting Gui (the app) in real states
-
-`bun scripts/gui-states.ts` drives the real Gui (Playwright's Electron support, like Gui's e2e suite) on a
-throwaway copy of `~/Projects/gui/www` with an isolated profile. No recents or personal data, no agent turn
-sent. It writes `raw/gui/app-{preview,pick,compose}-{dark,light}.png`, which recipes use as
-`{ type: file, path: "raw/gui/app-compose-{theme}.png", window: true }`. It needs the repo build
-(`~/Projects/gui/out`, `bun run build` there) because release builds block automation. Gui comes to the
-front for about a minute while it captures.
+- Bun + TypeScript. `bun run typecheck`. Entry point `src/cli.ts`; capture in `src/capture/`, layout and frames in
+  `src/compose/`, video in `src/motion/`, contact sheets in `src/deliver/`.
+- Apple bezels live in `assets/bezels/` (gitignored, downloaded by `scripts/setup-bezels.ts`, measured by
+  `scripts/measure-bezels.ts`). Never commit them; Apple's terms don't allow redistribution.
+- The site (pshot.dev) is built from `README.md` by `site/build.ts` and deployed with `bunx wrangler deploy` from
+  `site/`. It also serves `install.sh` at `/install`, so redeploy after changing either.
+- `scripts/gui-states.ts` is an example of capturing an Electron app in real states: it drives the app with
+  Playwright's Electron support on a throwaway project copy and an isolated profile, and captures each state.
 
 ## Gotchas
 
-- Electron-based hosts export `ELECTRON_RUN_AS_NODE=1` (Electron apps then exit on launch), and agent
-  markers like `CLAUDECODE`/`AI_AGENT` make `astro dev` daemonize (it looks like a crash to Gui).
-  `src/util.ts:cleanEnv` strips both for launched apps. Manually: `env -u ELECTRON_RUN_AS_NODE open -a <App>`.
-- Window capture: ScreenCaptureKit, then `screencapture -l`, then display-crop. If Screen Recording is stale
-  (the toggle is on but captures fail or come back black), toggle it off and on for the terminal app. The Gui
-  driver then falls back to Electron rendering its own window, with the macOS chrome redrawn.
-- `pshot <project>` deletes finals for shots no longer in the recipe, so they can't be delivered by mistake.
-- Images *inside* a page (e.g. marketing screenshots) can be lower-res than the page; QA can't detect that.
-  Prefer capturing the real app over zooming into a site's own screenshots.
-- Personal data: native app windows show real recents and project names. Check before delivering.
+- Electron-based hosts export `ELECTRON_RUN_AS_NODE=1` (Electron apps then exit on launch), and agent markers
+  like `CLAUDECODE` / `AI_AGENT` make some dev servers (e.g. `astro dev`) daemonize. `src/util.ts:cleanEnv`
+  strips both for apps pshot launches. Manually: `env -u ELECTRON_RUN_AS_NODE open -a <App>`.
+- Window capture tries ScreenCaptureKit, then `screencapture -l`, then a display crop. If Screen Recording is
+  stale (on, but captures fail or come back black), toggle it off and on for the terminal app and restart it.
+  macOS may also ask for a periodic "bypass the private window picker" approval.
+- Sites that scroll inside a container (e.g. Lenis) instead of the page: stills work, scroll videos don't yet.
+- Images *inside* a page can be lower resolution than the page; QA can't detect that. Prefer the real app.
+- Native app windows show real recents and project names. Check for personal data before delivering.
+- Running `pshot` deletes finals for shots that are no longer in the recipe.

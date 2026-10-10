@@ -13,16 +13,14 @@ const ROOT = join(SITE, "..");
 const DIST = join(SITE, "dist");
 
 const readme = await Bun.file(join(ROOT, "README.md")).text();
-let body = Bun.markdown.html(readme.replace(" [pshot.dev](https://pshot.dev)", ""));
-
-// The example contact sheet goes right after the intro paragraph.
-const figure = `
-<figure>
-  <a href="/contact-sheet.png"><img src="/contact-sheet.webp" width="1800" height="1586"
-    alt="A pshot contact sheet: nine product shots of websites and apps in dark and light, unframed, close-up and on Apple devices."></a>
-  <figcaption>An example contact sheet from <code>pshot</code>. Click for full resolution.</figcaption>
-</figure>`;
-body = body.replace("</p>", `</p>${figure}`);
+// The README's own image paths point into site/assets; on the site they're served from the root.
+const body = Bun.markdown.html(
+  readme
+    .replace(" [pshot.dev](https://pshot.dev)", "")
+    .replaceAll("site/assets/", "/")
+    // Repo-relative doc links go to GitHub.
+    .replaceAll("](docs/", "](https://github.com/brijr/pshot/blob/main/docs/"),
+);
 
 const html = `<!doctype html>
 <html lang="en">
@@ -59,11 +57,13 @@ const html = `<!doctype html>
   code { font: inherit; background: var(--code); padding: .1em .35em; border-radius: 3px; }
   pre { background: var(--code); padding: 14px 16px; border-radius: 4px; overflow-x: auto; margin: 0 0 1.4em; line-height: 1.6; }
   pre code { background: none; padding: 0; }
-  figure { margin: 2.6em -12ch 3em; }
-  figure img { display: block; width: 100%; height: auto; border-radius: 4px; outline: 1px solid var(--line); }
-  figcaption { color: var(--dim); margin-top: .8em; padding: 0 12ch; }
+  p:has(> a > img) { margin: 2.6em -12ch 3em; }
+  p img { display: block; width: 100%; height: auto; border-radius: 4px; outline: 1px solid var(--line); }
+  blockquote { margin: 0 0 1.2em; padding-left: 2ch; border-left: 1px solid var(--line); color: var(--dim); }
+  blockquote p { margin: 0; }
+  table { border-collapse: collapse; margin: 0 0 1.4em; }
   footer { margin-top: 5em; color: var(--dim); }
-  @media (max-width: 1100px) { figure { margin-left: 0; margin-right: 0; } figcaption { padding: 0; } }
+  @media (max-width: 1100px) { p:has(> a > img) { margin-left: 0; margin-right: 0; } }
 </style>
 </head>
 <body>
