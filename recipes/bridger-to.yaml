@@ -1,6 +1,5 @@
 project: bridger-to
 defaults:
-  ratio: "4:3"
   themes: [dark, light]
   web:
     url: https://bridger.to
@@ -14,18 +13,11 @@ shots:
     source: { type: web }
     layout: single
 
-  # Homepage up close, running off the right and bottom edges (4:3 and square).
+  # Homepage up close, running off the right and bottom edges .
   - id: home-corner
     source: { type: web }
     layout: bleed
     options: { edge: corner, zoom: 1.4, insetX: 0.1, insetY: 0.12 }
-
-  # Narrower viewport so the centred column fills the window in a square crop.
-  - id: home-corner-square
-    source: { type: web, viewport: 900x900 }
-    layout: bleed
-    ratio: "1:1"
-    options: { edge: corner, zoom: 1.5, insetX: 0.1, insetY: 0.12 }
 
   # The link grid up close (auto-DPR keeps it sharp).
   - id: links-detail

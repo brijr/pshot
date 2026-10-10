@@ -1,6 +1,5 @@
 project: shape
 defaults:
-  ratio: "4:3"
   themes: [dark, light]
 
 shots:

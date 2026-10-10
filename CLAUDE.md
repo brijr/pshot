@@ -9,7 +9,7 @@ and you capture, compose, review, and deliver, all to his standards. See `PLAN.m
 - Framing: **minimal by default** (raw UI, radius, soft shadow; hairline on dark). Mockups (`iphone`, `macbook`,
   `display`) only when asked or when they clearly help.
 - No captions, logos, or watermarks. The work only.
-- 4:3, 3200×2400 by default; `--xl` = 4800×3600. Always render **dark and light**.
+- **4:3 only** (for now): 3200×2400, `--xl` = 4800×3600. Don't set `ratio` in recipes. Always render **dark and light**.
 - **Never upscale.** The renderer flags it, and web sources auto-recapture at the needed DPR. A warning on any
   other source type means you must recapture higher (Figma `scale: 4`, or use a bigger window/simulator).
 - Real content only. Hide cookie banners, chat widgets, dev toasts, and empty/loading states.
