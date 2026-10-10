@@ -1,6 +1,6 @@
 # pshot
 
-Product shots of your work, made by your AI agent.
+Product shots of your work, made by your AI agent. [pshot.dev](https://pshot.dev)
 
 pshot captures websites, local dev servers, Figma frames, and Mac/iOS apps, then composes them into
 minimal, high-resolution product shots: near-black and off-white canvases, 4:3 at 3200×2400, in dark

@@ -13,7 +13,7 @@ const ROOT = join(SITE, "..");
 const DIST = join(SITE, "dist");
 
 const readme = await Bun.file(join(ROOT, "README.md")).text();
-let body = Bun.markdown.html(readme);
+let body = Bun.markdown.html(readme.replace(" [pshot.dev](https://pshot.dev)", ""));
 
 // The example contact sheet goes right after the intro paragraph.
 const figure = `
