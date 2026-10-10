@@ -16,18 +16,20 @@ export async function recordScroll(src: WebSource, theme: Theme, dpr: number, m:
   const hold = m.hold ?? 0.6;
   const { page, close } = await openWebPage(src, theme, dpr, { still: false });
   try {
-    const resolve = (target: number | string | undefined, fallback: "top" | "end") =>
-      page.evaluate(
-        ([target, fallback]) => {
-          const max = document.documentElement.scrollHeight - window.innerHeight;
-          if (target === undefined) return fallback === "end" ? max : 0;
-          if (target === "end") return max;
-          if (typeof target === "number") return Math.min(target, max);
-          const el = document.querySelector(target);
-          return el ? Math.min(el.getBoundingClientRect().top + window.scrollY, max) : 0;
-        },
-        [target, fallback] as const,
-      );
+    // Targets: px, "end", or any Playwright selector (incl. :has-text()). Unmatched selectors warn.
+    const resolve = async (target: number | string | undefined, fallback: "top" | "end"): Promise<number> => {
+      const max = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+      if (target === undefined) return fallback === "end" ? max : 0;
+      if (target === "end") return max;
+      if (typeof target === "number") return Math.min(target, max);
+      const el = page.locator(target).first();
+      if (!(await el.count())) {
+        console.log(`   ! motion target "${target}" matched nothing; using ${fallback === "end" ? "the end" : "the top"}`);
+        return fallback === "end" ? max : 0;
+      }
+      const top = await el.evaluate((e) => e.getBoundingClientRect().top + window.scrollY);
+      return Math.min(top, max);
+    };
     const from = await resolve(m.from, "top");
     const to = await resolve(m.to, "end");
     await page.evaluate((y) => window.scrollTo(0, y), from);
