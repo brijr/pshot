@@ -43,7 +43,7 @@ Raw captures: `raw/<project>/` (gitignored).
 
 | type | notes |
 |---|---|
-| `web` | `url, viewport, scheme (match/dark/light/cross), fullPage, selector, scrollTo, hide[], css, actions[], waitFor, delay, dpr, storage, hideFixed`. Sites with their own theme toggle (next-themes etc.) ignore the OS scheme: set `storage: { theme: "{theme}" }` to preset localStorage per shot. `hideFixed` (default on for `fullPage`) hides floating CTAs/clocks that would otherwise land mid-page. `scheme: match` captures dark UI for dark shots when the site supports it. With a `frame`, the viewport defaults to the frame's screen (`iphone` 402×812, `macbook` 1512×982, `display` 1600×900). |
+| `web` | `url, viewport, scheme (match/dark/light/cross), fullPage, selector, scrollTo, hide[], css, actions[], waitFor, delay, dpr, storage, hideFixed`. Sites with their own theme toggle (next-themes etc.) ignore the OS scheme: set `storage: { theme: "{theme}" }` to preset localStorage per shot. `hideFixed` (default on for `fullPage`) hides floating CTAs/clocks that would otherwise land mid-page. `scheme: match` captures dark UI for dark shots when the site supports it. With a `frame`, the viewport defaults to the frame's screen (see Layouts → Frames). |
 | `figma` | `url` with `?node-id=`. REST export at `scale` (max 4) with `FIGMA_TOKEN` from `.env`, retrying and stepping down the scale if Figma's render times out. Boards with no fill need `background` + `pad`. If there's no token, export via the Figma MCP into `raw/` and use `file`. |
 | `mac` | `app, title?, size?`. Captures one window at Retina without the system shadow (keeps native corners). Needs Screen Recording permission. The app follows the system appearance, so it does **not** switch per theme. |
 | `ios` | `device, url?, app?, delay`. Sets appearance per theme and overrides the status bar. Pages need ~8–9 s to fully load in Simulator Safari. |
@@ -62,7 +62,13 @@ shadow automatically when the UI edge is close to the background.
 - `bleed`: `edge: bottom|right|corner, size, inset`. Pair with `fullPage: true`.
 - `duo`: unframed → equal-height row. With frames → a scene with the second device in front (`scale, overlap, dropB`).
 - `row`, `grid` (`cols, gap`), `stagger` (`size, offset, gap, rotate`).
-- Frame options in `options`: `finish: black|silver` (iPhone/MacBook default black, Studio Display silver), `statusBar`, `notch`.
+- Frames: `iphone` (18 Pro), `ipad` (Pro 13", portrait or landscape from the viewport), `macbook` (Pro 14"),
+  `display` (Studio Display). They use **Apple's official product bezels** from `assets/bezels/` (gitignored;
+  run `bun scripts/setup-bezels.ts` once on a new machine). Without them, CSS-drawn frames are the fallback.
+  Viewports: iPhone 402×812 (status bar added), iPad 1032×1376 / 1376×1032, MacBook 1512×950 (content
+  starts below the notch, like a full-screen app), Display 1600×900.
+- Frame options in `options`: `finish: black|silver` (iPhone/iPad/MacBook; default black. The Studio Display
+  variant follows the theme), `statusBar`.
 
 ## Composition rules of thumb
 

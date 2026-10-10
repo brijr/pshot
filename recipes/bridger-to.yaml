@@ -46,6 +46,11 @@ shots:
     layout: duo
     options: { scale: 0.72, overlap: 0.06, dropB: 0.04 }
 
+  # iPad Pro (landscape) on /work.
+  - id: ipad
+    source: { type: web, url: "https://bridger.to/work", frame: ipad, viewport: 1376x1032 }
+    layout: single
+
   # Four phones, four pages.
   - id: mobile-stagger
     sources:

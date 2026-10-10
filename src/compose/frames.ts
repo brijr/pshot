@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { CONTRAST_THRESHOLD, MOBILE_RADIUS_RATIO, SCREEN_RADIUS, THEMES } from "../tokens";
 import type { Asset, FrameKind, Theme } from "../types";
 
@@ -298,11 +301,94 @@ const display: Frame = {
   },
 };
 
-export const FRAMES: Record<FrameKind, Frame> = { none, iphone, macbook, display };
+// ─── Apple product bezels (assets/bezels, measured by scripts/measure-bezels.ts) ──
+
+interface BezelSpec {
+  file: string;
+  width: number;
+  height: number;
+  screen: { x: number; y: number; w: number; h: number };
+  radius: [number, number, number, number];
+}
+
+const BEZEL_DIR = join(import.meta.dir, "../../assets/bezels");
+const BEZELS: Record<string, BezelSpec> = existsSync(join(BEZEL_DIR, "bezels.json"))
+  ? JSON.parse(readFileSync(join(BEZEL_DIR, "bezels.json"), "utf8"))
+  : {};
+
+/** MacBook notch height in bezel px (2×): content starts below it, like a full-screen Mac app. */
+const MBP_NOTCH_PX = 64;
+
+type BezelPick = (asset: Asset, theme: Theme, opts: FrameOpts) => string;
+
+function bezelFrame(kind: FrameKind, pick: BezelPick, fallback: Frame): Frame {
+  const spec = (asset: Asset, theme: Theme, opts: FrameOpts) => BEZELS[pick(asset, theme, opts)];
+  return {
+    // Aspect can't depend on theme; every variant of a device shares geometry.
+    aspect(asset) {
+      const b = spec(asset, "dark", {});
+      return b ? b.width / b.height : fallback.aspect(asset);
+    },
+    render(asset, r, theme, opts) {
+      const b = spec(asset, theme, opts);
+      if (!b) return fallback.render(asset, r, theme, opts);
+      const t = THEMES[theme];
+      const k = r.w / b.width;
+      const src = pathToFileURL(join(BEZEL_DIR, b.file)).href;
+      const screen: Rect = { x: r.x + b.screen.x * k, y: r.y + b.screen.y * k, w: b.screen.w * k, h: b.screen.h * k };
+      const radius = b.radius.map((v) => px(v * k)).join(" ");
+      const img = (style: string) =>
+        `<img src="${src}" style="position:absolute;left:${px(r.x)};top:${px(r.y)};width:${px(r.w)};height:${px(r.h)};${style}">`;
+
+      let padTop = 0;
+      let fill = asset.topColor ?? "#000";
+      let over = "";
+      if (kind === "iphone") {
+        const u = screen.w / IPHONE.w; // css px per pt
+        const native = asset.source.type === "ios";
+        if (opts.statusBar ?? !native) {
+          padTop = IPHONE.statusBar * u;
+          over += statusBar(screen, u, (asset.topLuma ?? 1) > 0.55 ? "#000" : "#fff");
+        }
+      } else if (kind === "macbook") {
+        padTop = MBP_NOTCH_PX * k;
+        fill = "#000";
+      } else {
+        fill = "#000";
+      }
+      return {
+        // The shadow comes from a copy of the bezel beneath the screen, so it follows the device's
+        // real silhouette and never darkens the screen itself.
+        under: img(`filter:${t.dropShadow};`),
+        over: over + img(""),
+        screen: { ...screen, radius, padTop, fill },
+      };
+    },
+  };
+}
+
+const finishOf = (opts: FrameOpts) => opts.finish ?? "black";
+const landscape = (a: Asset) => a.width / a.height > 1;
+
+/** CSS iPad fallback (no bezel files): reuse the unframed screen with a device-ish radius. */
+const ipadFallback: Frame = {
+  aspect: (a) => a.width / a.height,
+  render: (a, r, theme, opts) => none.render({ ...a, source: { ...a.source, radius: r.w * 0.03 } }, r, theme, opts),
+};
+
+export const FRAMES: Record<FrameKind, Frame> = {
+  none,
+  iphone: bezelFrame("iphone", (_a, _t, o) => `iphone-${finishOf(o)}`, iphone),
+  ipad: bezelFrame("ipad", (a, _t, o) => `ipad-${finishOf(o)}-${landscape(a) ? "landscape" : "portrait"}`, ipadFallback),
+  macbook: bezelFrame("macbook", (_a, _t, o) => `macbook-${finishOf(o)}`, macbook),
+  // Apple ships Studio Display renders tuned for dark and light backgrounds.
+  display: bezelFrame("display", (_a, t) => `display-${t}`, display),
+};
 
 /** Recommended web viewports so captures match a frame's screen exactly. */
 export const FRAME_VIEWPORTS: Partial<Record<FrameKind, string>> = {
   iphone: "402x812", // 874 − 62pt status bar
-  macbook: "1512x982",
+  ipad: "1032x1376", // iPad Pro 13" portrait; use 1376x1032 for landscape
+  macbook: "1512x950", // 982 − 32pt notch strip
   display: "1600x900",
 };

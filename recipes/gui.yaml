@@ -46,6 +46,11 @@ shots:
     source: { type: web, frame: display, scrollTo: "section:nth-of-type(4)" }
     layout: single
 
+  # iPad Pro (portrait) on "How it works".
+  - id: ipad
+    source: { type: web, frame: ipad, scrollTo: "section.wide" }
+    layout: single
+
   # Four phones, four different screens.
   - id: mobile-stagger
     sources:

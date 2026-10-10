@@ -94,7 +94,7 @@ export interface FileSource extends BaseSource {
 
 export type Source = WebSource | FigmaSource | MacSource | IosSource | FileSource;
 
-export type FrameKind = "none" | "iphone" | "macbook" | "display";
+export type FrameKind = "none" | "iphone" | "ipad" | "macbook" | "display";
 
 export type LayoutKind =
   | "single"
