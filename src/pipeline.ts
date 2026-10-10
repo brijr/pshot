@@ -3,7 +3,7 @@ import { isAbsolute, join } from "node:path";
 import { capture, captureVariant, ROOT } from "./capture";
 import { recordIos } from "./capture/ios";
 import { recordMac } from "./capture/mac";
-import { FRAME_VIEWPORTS } from "./compose/frames";
+import { frameViewport } from "./compose/frames";
 import { LAYOUTS } from "./compose/layouts";
 import { render, type QaNote, type RenderInput } from "./compose/render";
 import { composite, recordScroll } from "./motion";
@@ -27,13 +27,20 @@ export interface ShotReport {
 }
 
 function resolveSources(recipe: Recipe, shot: Shot): Source[] {
+  const statusBar = (shot.options as { statusBar?: boolean } | undefined)?.statusBar;
   const list = shot.sources ?? (shot.source ? [shot.source] : []);
   if (!list.length) throw new Error(`Shot "${shot.id}" has no source(s)`);
   return list.map((s) => {
     if (s.type !== "web") return s;
-    // Viewport precedence: the source's own → its frame's screen → recipe default → 1440×900.
     const merged = { ...recipe.defaults?.web, ...s };
-    merged.viewport = s.viewport ?? (s.frame && FRAME_VIEWPORTS[s.frame]) ?? recipe.defaults?.web?.viewport ?? "1440x900";
+    if (s.frame && s.frame !== "none") {
+      // Framed: the viewport always matches the device screen exactly (width kept if given).
+      const fit = frameViewport(s.frame, s.viewport, { statusBar })!;
+      if (s.viewport && s.viewport !== fit) log(`↔ ${shot.id}: viewport ${s.viewport} → ${fit} to fit the ${s.frame} screen`);
+      merged.viewport = fit;
+    } else {
+      merged.viewport = s.viewport ?? recipe.defaults?.web?.viewport ?? "1440x900";
+    }
     return merged;
   });
 }

@@ -65,8 +65,10 @@ shadow automatically when the UI edge is close to the background.
 - Frames: `iphone` (18 Pro), `ipad` (Pro 13", portrait or landscape from the viewport), `macbook` (Pro 14"),
   `display` (Studio Display). They use **Apple's official product bezels** from `assets/bezels/` (gitignored;
   run `bun scripts/setup-bezels.ts` once on a new machine). Without them, CSS-drawn frames are the fallback.
-  Viewports: iPhone 402×812 (status bar added), iPad 1032×1376 / 1376×1032, MacBook 1512×950 (content
-  starts below the notch, like a full-screen app), Display 1600×900.
+  **Screens are always filled exactly:** for web sources the viewport is computed from the measured bezel
+  screen (iPhone 402×812 with status bar, iPad 1032×1376 / 1376×1032, MacBook 1512×950 below the notch,
+  Display 1600×900). A wrong recipe viewport keeps its width and gets its height corrected (logged `↔`).
+  Other sources (iOS, Figma, files) that don't match the screen shape fail QA with a warning.
 - Frame options in `options`: `finish: black|silver` (iPhone/iPad/MacBook; default black. The Studio Display
   variant follows the theme), `statusBar`.
 

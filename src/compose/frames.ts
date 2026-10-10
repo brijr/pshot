@@ -385,10 +385,51 @@ export const FRAMES: Record<FrameKind, Frame> = {
   display: bezelFrame("display", (_a, t) => `display-${t}`, display),
 };
 
-/** Recommended web viewports so captures match a frame's screen exactly. */
-export const FRAME_VIEWPORTS: Partial<Record<FrameKind, string>> = {
-  iphone: "402x812", // 874 − 62pt status bar
-  ipad: "1032x1376", // iPad Pro 13" portrait; use 1376x1032 for landscape
-  macbook: "1512x950", // 982 − 32pt notch strip
-  display: "1600x900",
+/** CSS width of each device's screen; heights are derived from the measured screen so captures always fit. */
+const FRAME_WIDTH: Partial<Record<FrameKind, { portrait: number; landscape?: number }>> = {
+  iphone: { portrait: 402 },
+  ipad: { portrait: 1032, landscape: 1376 },
+  macbook: { portrait: 1512 },
+  display: { portrait: 1600 },
 };
+
+/**
+ * Width / height of the area screen content is drawn into for a frame: the bezel's measured screen
+ * minus the iPhone status bar (when drawn) or the MacBook notch strip.
+ */
+export function contentAspect(kind: FrameKind, opts: { landscape?: boolean; statusBar?: boolean } = {}): number | null {
+  const orient = opts.landscape ? "landscape" : "portrait";
+  const key = { iphone: "iphone-black", ipad: `ipad-black-${orient}`, macbook: "macbook-black", display: "display-dark" }[kind as string];
+  const b = key ? BEZELS[key] : undefined;
+  let w: number;
+  let h: number;
+  let pad = 0;
+  if (b) {
+    ({ w, h } = b.screen);
+    if (kind === "iphone" && opts.statusBar !== false) pad = IPHONE.statusBar * (w / IPHONE.w);
+    if (kind === "macbook") pad = MBP_NOTCH_PX;
+  } else {
+    // CSS fallback geometry.
+    if (kind === "iphone") [w, h, pad] = [IPHONE.w, IPHONE.h, opts.statusBar !== false ? IPHONE.statusBar : 0];
+    else if (kind === "ipad") [w, h] = opts.landscape ? [1376, 1032] : [1032, 1376];
+    else if (kind === "macbook") [w, h] = [MBP.aspect, 1];
+    else if (kind === "display") [w, h] = [SD.aspect, 1];
+    else return null;
+  }
+  return w / (h - pad);
+}
+
+/**
+ * The web viewport that exactly fills a frame's screen. With `requested`, keeps its width (and its
+ * orientation for iPad) and corrects the height.
+ */
+export function frameViewport(kind: FrameKind, requested?: string, opts: { statusBar?: boolean } = {}): string | null {
+  const widths = FRAME_WIDTH[kind];
+  if (!widths) return null;
+  const [rw, rh] = requested ? requested.split("x").map(Number) : [];
+  const landscape = kind === "ipad" && !!rw && !!rh && rw > rh;
+  const aspect = contentAspect(kind, { landscape, statusBar: opts.statusBar });
+  if (!aspect) return null;
+  const w = rw || (landscape ? widths.landscape! : widths.portrait);
+  return `${w}x${Math.round(w / aspect)}`;
+}

@@ -111,12 +111,17 @@ function qaFor(input: RenderInput, renders: FrameRender[]): QaNote[] {
     const assetAspect = a.width / a.height;
     const slotAspect = cw / ch;
     // Tall full-page captures in bleed layouts are expected to crop.
-    const cropped = Math.abs(assetAspect - slotAspect) / slotAspect;
-    if (!s.dropShadow && cropped > 0.03 && it.rect.y + it.rect.h <= input.H) {
+    // Share of the image lost when it covers the slot.
+    const cropped = 1 - Math.min(assetAspect, slotAspect) / Math.max(assetAspect, slotAspect);
+    const framed = (a.source.frame ?? "none") !== "none";
+    // Device screens must be filled exactly; unframed screens tolerate a little crop (and bleed crops by design).
+    if (!s.dropShadow && (framed ? cropped > 0.01 : cropped > 0.03 && it.rect.y + it.rect.h <= input.H)) {
       notes.push({
         item: i,
-        level: cropped > 0.25 ? "warn" : "info",
-        msg: `content cropped to fit (${assetAspect.toFixed(3)} → ${slotAspect.toFixed(3)}); match the viewport to the frame to avoid.`,
+        level: framed || cropped > 0.25 ? "warn" : "info",
+        msg: framed
+          ? `doesn't match the ${a.source.frame} screen (${assetAspect.toFixed(3)} vs ${slotAspect.toFixed(3)}), ${(cropped * 100).toFixed(1)}% would be cropped. Capture at the device's screen size (web sources fit automatically).`
+          : `content cropped to fit (${assetAspect.toFixed(3)} → ${slotAspect.toFixed(3)}); match the viewport to the frame to avoid.`,
       });
     }
   });
