@@ -56,6 +56,12 @@ export async function openWebPage(
     isMobile: width < 600,
     hasTouch: width < 600,
   });
+  if (src.storage) {
+    const entries = Object.entries(src.storage).map(([k, v]) => [k, v.replaceAll("{theme}", scheme)]);
+    await context.addInitScript((entries) => {
+      for (const [k, v] of entries) localStorage.setItem(k!, v!);
+    }, entries);
+  }
   const page = await context.newPage();
   await page.goto(src.url, { waitUntil: "load", timeout: 60_000 });
   await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
@@ -106,6 +112,7 @@ export async function captureWeb(src: WebSource, theme: Theme, dpr: number, out:
   const { page, close } = await openWebPage(src, theme, dpr, { still: true });
   try {
     if (src.scrollTo !== undefined) await scrollTo(page, src.scrollTo);
+    if (src.hideFixed ?? !!src.fullPage) await hideFixed(page);
     if (src.selector) {
       await page.locator(src.selector).first().screenshot({ path: out, animations: "disabled" });
     } else {
@@ -114,4 +121,13 @@ export async function captureWeb(src: WebSource, theme: Theme, dpr: number, out:
   } finally {
     await close();
   }
+}
+
+/** Hide position:fixed elements, which otherwise float mid-page in full-page captures. */
+export async function hideFixed(page: Page) {
+  await page.evaluate(() => {
+    for (const el of document.querySelectorAll<HTMLElement>("body *")) {
+      if (getComputedStyle(el).position === "fixed") el.style.setProperty("visibility", "hidden", "important");
+    }
+  });
 }

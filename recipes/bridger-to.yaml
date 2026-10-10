@@ -1,0 +1,63 @@
+project: bridger-to
+defaults:
+  ratio: "4:3"
+  themes: [dark, light]
+  web:
+    url: https://bridger.to
+    viewport: 1280x800
+    # next-themes with its own toggle (doesn't follow the OS): preset its stored theme per shot.
+    storage: { theme: "{theme}" }
+
+shots:
+  # Homepage above the fold.
+  - id: home
+    source: { type: web }
+    layout: single
+
+  # The link grid up close (auto-DPR keeps it sharp).
+  - id: links-detail
+    source: { type: web, crop: [0.235, 0.32, 0.53, 0.26] }
+    layout: detail
+    options: { fill: 0.84 }
+
+  # The full /work index running off the bottom edge.
+  - id: work-bleed
+    source: { type: web, url: "https://bridger.to/work", fullPage: true }
+    layout: bleed
+    options: { edge: bottom, size: 0.8, inset: 0.1 }
+
+  # A post, scrolled to its first code block.
+  - id: post
+    source: { type: web, url: "https://bridger.to/lenis-nextjs", scrollTo: "pre" }
+    layout: single
+
+  # Posts index on desktop + mobile.
+  - id: posts-duo
+    sources:
+      - { type: web, url: "https://bridger.to/posts" }
+      - { type: web, url: "https://bridger.to/posts", viewport: 390x844 }
+    layout: duo
+
+  # MacBook (about) + iPhone (home).
+  - id: devices
+    sources:
+      - { type: web, url: "https://bridger.to/about", frame: macbook }
+      - { type: web, frame: iphone }
+    layout: duo
+    options: { scale: 0.72, overlap: 0.06, dropB: 0.04 }
+
+  # Four phones, four pages.
+  - id: mobile-stagger
+    sources:
+      - { type: web, frame: iphone }
+      - { type: web, url: "https://bridger.to/work", frame: iphone }
+      - { type: web, url: "https://bridger.to/posts", frame: iphone }
+      - { type: web, url: "https://bridger.to/mac", frame: iphone }
+    layout: stagger
+    options: { size: 0.6, offset: 0.05, gap: 0.024 }
+
+  # Slow scroll through a long post on iPhone.
+  - id: post-scroll
+    source: { type: web, url: "https://bridger.to/mac", frame: iphone }
+    layout: single
+    motion: { kind: scroll, duration: 6, to: 2400, hold: 1 }

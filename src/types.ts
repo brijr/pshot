@@ -49,6 +49,13 @@ export interface WebSource extends BaseSource {
   actions?: Action[];
   /** Keep animations running (default: frozen for stills). */
   animations?: boolean;
+  /**
+   * localStorage to set before any page script runs; values may contain `{theme}` (the resolved
+   * scheme). E.g. `{ theme: "{theme}" }` for next-themes sites with their own toggle.
+   */
+  storage?: Record<string, string>;
+  /** Hide position:fixed elements (floating CTAs, clocks…). Defaults to true for fullPage. */
+  hideFixed?: boolean;
 }
 
 export interface FigmaSource extends BaseSource {
