@@ -85,10 +85,24 @@ Finals go to `/Portfolio/<project>/` (create with `create_folder` if missing). F
 `prepare_upload { path: "/Portfolio/<project>/<file>", size_bytes }` → `curl -sT <file> "<upload_url>"`.
 Skip `_contact.png` and `_report.json` unless asked.
 
+## Shooting Gui (the app) in real states
+
+`bun scripts/gui-states.ts` drives the real Gui (Playwright's Electron support, like Gui's e2e suite) on a
+throwaway copy of `~/Projects/gui/www` with an isolated profile. No recents or personal data, no agent turn
+sent. It writes `raw/gui/app-{preview,pick,compose}-{dark,light}.png`, which recipes use as
+`{ type: file, path: "raw/gui/app-compose-{theme}.png", window: true }`. It needs the repo build
+(`~/Projects/gui/out`, `bun run build` there) because release builds block automation. Gui comes to the
+front for about a minute while it captures.
+
 ## Gotchas
 
-- Electron-based hosts export `ELECTRON_RUN_AS_NODE=1`, which makes Electron apps (like Gui) exit on launch.
-  `src/util.ts:cleanEnv` strips it for child processes; if you launch an app manually, use `env -u ELECTRON_RUN_AS_NODE open -a <App>`.
+- Electron-based hosts export `ELECTRON_RUN_AS_NODE=1` (Electron apps then exit on launch), and agent
+  markers like `CLAUDECODE`/`AI_AGENT` make `astro dev` daemonize (it looks like a crash to Gui).
+  `src/util.ts:cleanEnv` strips both for launched apps. Manually: `env -u ELECTRON_RUN_AS_NODE open -a <App>`.
+- Window capture: ScreenCaptureKit, then `screencapture -l`, then display-crop. If Screen Recording is stale
+  (the toggle is on but captures fail or come back black), toggle it off and on for the terminal app. The Gui
+  driver then falls back to Electron rendering its own window, with the macOS chrome redrawn.
+- `bun shot <project>` deletes finals for shots no longer in the recipe, so they can't be delivered by mistake.
 - Images *inside* a page (e.g. marketing screenshots) can be lower-res than the page; QA can't detect that.
   Prefer capturing the real app over zooming into a site's own screenshots.
 - Personal data: native app windows show real recents and project names. Check before delivering.
